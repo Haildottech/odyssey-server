@@ -191,10 +191,10 @@ routes.post("/create", async(req, res) => {
         delete data.id
         data.customCheck = data.customCheck.toString();
         data.transportCheck = data.transportCheck.toString();
-        const check = await SE_Job.findOne({order: [ [ 'jobId', 'DESC' ]], attributes:["jobId"]});
+        const check = await SE_Job.findOne({order: [ [ 'jobId', 'DESC' ]], attributes:["jobId"], where:{operation:data.operation}});
         const result = await SE_Job.create({
             ...data,
-            jobId:check==null?1:parseInt(check.jobId)+1, jobNo:`SNS-SEJ-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
+            jobId:check==null?1:parseInt(check.jobId)+1, jobNo:`SNS-${data.operation}J-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
         })
         console.log(result.id)
         await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
@@ -233,9 +233,13 @@ routes.post("/edit", async(req, res) => {
 });
   
 routes.get("/get", async(req, res) => {
+    console.log(req.headers)
     try {
         const result = await SE_Job.findAll({
-            where:{companyId:req.headers.companyid},
+            where:{
+                companyId:req.headers.companyid,
+                operation:req.headers.operation
+            },
             include:[
                 {model:Voyage},
                 {model:Employees, as:'created_by', attributes:['name'] },
@@ -287,6 +291,7 @@ routes.get("/getSEJobIds", async(req, res) => {
 });
 
 routes.get("/getSEJobById", async(req, res) => {
+    
     try {
         const result = await SE_Job.findOne({
             where:{id:req.headers.id},
@@ -315,7 +320,7 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
     ]
     try {
     const result = await SE_Job.findAll({
-        //where:{"approved": "true"},
+        where:{id:req.headers.id},
         attributes:[
             'id', 'jobNo', 'pol',
             'pod', 'fd', 'jobDate',
@@ -324,7 +329,10 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
         ],
         order:[["createdAt", "DESC"]],
         include:[
-            { model:Bl },
+            {
+                model:Bl,
+                required: false,
+            },
             { model:SE_Equipments, attributes:['qty', 'size'] },
             { model:Clients,  attributes:attr },
             { model:Clients, as:'consignee', attributes:attr },
@@ -332,7 +340,7 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
             { model:Vendors, as:'overseas_agent', attributes:attr },
             { model:Commodity, as:'commodity' },
             { model:Vessel, as:'vessel', attributes:['name'] }
-        ]
+        ],
     });
     res.json({status:'success', result:result});
     }

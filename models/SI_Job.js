@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const SE_Job = sequelize.define("SE_Job", {
+    const SI_Job = sequelize.define("SI_Job", {
         jobNo: { type:DataTypes.STRING },
         jobId: { type:DataTypes.STRING },
         title:{ type:DataTypes.STRING },
@@ -57,7 +57,11 @@ module.exports = (sequelize, DataTypes) => {
             type:DataTypes.STRING,
             defaultValue: "0"
         },
-        operation:{ type:DataTypes.STRING }
+        hbl: { type:DataTypes.STRING },
+        hblDate: { type:DataTypes.STRING },
+        mbl: { type:DataTypes.STRING },
+        mblDate: { type:DataTypes.STRING },
+        typeOfBl: { type:DataTypes.STRING }
     })
-    return SE_Job;
+    return SI_Job;
 }

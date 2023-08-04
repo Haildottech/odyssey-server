@@ -1,10 +1,8 @@
 const express = require("express");
 const app = express();
-
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
-
 const db = require("./models");
 
 const employeeRoutes = require('./routes/employees/');
@@ -32,11 +30,10 @@ const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes } = require
 const { Vendors, Vendor_Associations } = require('./functions/Associations/vendorAssociations');
 const {Clients, Client_Associations} = require('./functions/Associations/clientAssociation');
 const {Vouchers, Voucher_Heads} = require('./functions/Associations/voucherAssociations');
-const { Voyage } = require('./functions/Associations/vesselAssociations');
-const { AssignTask } = require('./functions/Associations/taskAssociation');
 const { Notifications } = require('./functions/Associations/NotificationAssociation');
-const {Non_Gl_Parties} = require('./models')
-// const {Bl, Stamps} = require("./functions/Associations/stamps")
+const { AssignTask } = require('./functions/Associations/taskAssociation');
+const { Voyage }=require('./functions/Associations/vesselAssociations');
+const { Non_Gl_Parties } = require('./models');
 
 app.use(morgan('tiny'));
 app.use(cors()); 
@@ -46,7 +43,7 @@ app.use(bodyParser.json({limit: '100mb', extended: true}));
 app.use(express.json());
 db.sequelize.sync();
 
-app.get("/", (req, res) => { res.json('Welcome To Odyssey Server') });
+app.get("/", (req, res) => { res.json('Welcome To Odyssey Server in Hail Dot Tech') });
 //app.get("/getUser", verify, (req, res) => {res.json({isLoggedIn:true,username:req.body.username})});
 app.use("/home", homeAccountRoutes, homeOperationsRoutes);
 app.use("/employeeRoutes", employeeRoutes);
