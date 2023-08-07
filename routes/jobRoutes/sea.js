@@ -296,7 +296,7 @@ routes.get("/getSEJobById", async(req, res) => {
         const result = await SE_Job.findOne({
             where:{id:req.headers.id},
             include:[
-                {model:Bl, attributes:['id']},
+                {model:Bl, attributes:['id', 'hbl', 'hblDate', 'mbl', 'mblDate']},
                 {model:Voyage},
                 {model:SE_Equipments},
                 {
