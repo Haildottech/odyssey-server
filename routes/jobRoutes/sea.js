@@ -325,7 +325,8 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
             'id', 'jobNo', 'pol',
             'pod', 'fd', 'jobDate',
             'shipDate', 'cutOffDate',
-            'delivery', 'freightType'
+            'delivery', 'freightType',
+            'operation'
         ],
         order:[["createdAt", "DESC"]],
         include:[
@@ -353,9 +354,10 @@ routes.post("/createBl", async(req, res) => {
     try {
         let data = req.body;
         delete data.id
-        const check = await Bl.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"]})
+        const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
         const result = await Bl.create({...data, 
-            no:check==null?1:parseInt(check.no)+1, hbl:`SNSL${check==null?1:parseInt(check.no)+1}`
+            no:check==null?1:parseInt(check.no)+1, 
+            hbl:data.operation=="SE"?`SNSL${check==null?1:parseInt(check.no)+1}`:data.hbl
         }).catch((x)=>console.log(x))
         await data.Container_Infos.forEach((x, i)=>{
             data.Container_Infos[i] = {...x, BlId:result.id}

@@ -1,5 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
     const Bl = sequelize.define("Bl", {
+        operation:{ type:DataTypes.STRING },
         hbl:{ type:DataTypes.STRING },
         no:{ type:DataTypes.INTEGER },
         hblDate:{ type:DataTypes.STRING },
