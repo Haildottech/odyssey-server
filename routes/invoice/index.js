@@ -1,5 +1,5 @@
 const { Charge_Head, Invoice, Invoice_Losses } = require("../../functions/Associations/incoiceAssociations");
-const { SE_Job, SE_Equipments, Bl } = require("../../functions/Associations/jobAssociations/seaExport");
+const { SE_Job, SE_Equipments, Bl, Container_Info } = require("../../functions/Associations/jobAssociations/seaExport");
 const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
 const { Access_Levels, Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vouchers, Voucher_Heads } = require("../../functions/Associations/voucherAssociations");
@@ -203,7 +203,11 @@ routes.get("/getInvoiceByNo", async(req, res) => {
             ],
             //attributes:['id'],
             include:[
-              { model:Bl , attributes:['mbl', 'hbl'] },
+              { model:SE_Equipments , attributes:['qty', 'size'] },
+              { 
+                model:Bl , attributes:['mbl', 'hbl'],
+                include:[{model:Container_Info, attributes:['no']}]
+              },
               { model:Voyage , attributes:['voyage', 'importArrivalDate', 'exportSailDate'] },
               { model:Clients, attributes:attr },
               { model:Clients, as:'consignee', attributes:attr },

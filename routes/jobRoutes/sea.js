@@ -300,8 +300,8 @@ routes.get("/getSEJobById", async(req, res) => {
                 {model:Voyage},
                 {model:SE_Equipments},
                 {
-                    model:Clients,
-                    attributes:['name']
+                  model:Clients,
+                  attributes:['name']
                 }
             ],
             order:[["createdAt", "DESC"]],
@@ -322,25 +322,25 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
     const result = await SE_Job.findAll({
         where:{id:req.headers.id},
         attributes:[
-            'id', 'jobNo', 'pol',
-            'pod', 'fd', 'jobDate',
-            'shipDate', 'cutOffDate',
-            'delivery', 'freightType',
-            'operation'
+          'id', 'jobNo', 'pol',
+          'pod', 'fd', 'jobDate',
+          'shipDate', 'cutOffDate',
+          'delivery', 'freightType',
+          'operation'
         ],
         order:[["createdAt", "DESC"]],
         include:[
-            {
-                model:Bl,
-                required: false,
-            },
-            { model:SE_Equipments, attributes:['qty', 'size'] },
-            { model:Clients,  attributes:attr },
-            { model:Clients, as:'consignee', attributes:attr },
-            { model:Clients, as:'shipper', attributes:attr },
-            { model:Vendors, as:'overseas_agent', attributes:attr },
-            { model:Commodity, as:'commodity' },
-            { model:Vessel, as:'vessel', attributes:['name'] }
+          {
+            model:Bl,
+            required: false,
+          },
+          { model:SE_Equipments, attributes:['qty', 'size'] },
+          { model:Clients,  attributes:attr },
+          { model:Clients, as:'consignee', attributes:attr },
+          { model:Clients, as:'shipper', attributes:attr },
+          { model:Vendors, as:'overseas_agent', attributes:attr },
+          { model:Commodity, as:'commodity' },
+          { model:Vessel, as:'vessel', attributes:['name'] }
         ],
     });
     res.json({status:'success', result:result});
@@ -409,26 +409,25 @@ routes.post("/findJobByNo", async(req, res) => {
             'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
         ]
         const result = await SE_Job.findAll({
-            where:{jobNo:req.body.no},
-            attributes:[
-                'id', 'jobNo', 'pol',
-                'pod', 'fd', 'jobDate',
-                'shipDate', 'cutOffDate',
-                'delivery', 'freightType',
-                'freightPaybleAt','VoyageId'
-            ],
-            order:[["createdAt", "DESC"]],
-            include:[
-                { model:SE_Equipments, attributes:['qty', 'size'] },
-                { model:Clients,  attributes:attr },
-                { model:Clients, as:'consignee', attributes:attr },
-                { model:Clients, as:'shipper', attributes:attr },
-                { model:Vendors, as:'overseas_agent', attributes:attr },
-                { model:Commodity, as:'commodity' },
-                { model:Vessel,  as:'vessel', attributes:['name'] },
-                { model:Voyage, attributes:['voyage'] },
-                
-            ]
+          where:{jobNo:req.body.no},
+          attributes:[
+            'id', 'jobNo', 'pol',
+            'pod', 'fd', 'jobDate',
+            'shipDate', 'cutOffDate',
+            'delivery', 'freightType',
+            'freightPaybleAt','VoyageId'
+          ],
+          order:[["createdAt", "DESC"]],
+          include:[
+            { model:SE_Equipments, attributes:['qty', 'size'] },
+            { model:Clients,  attributes:attr },
+            { model:Clients, as:'consignee', attributes:attr },
+            { model:Clients, as:'shipper', attributes:attr },
+            { model:Vendors, as:'overseas_agent', attributes:attr },
+            { model:Commodity, as:'commodity' },
+            { model:Vessel,  as:'vessel', attributes:['name'] },
+            { model:Voyage, attributes:['voyage'] }
+          ]
         });
         res.json({status:'success', result:result});
     }
@@ -688,6 +687,5 @@ routes.get("/getValuesJobList", async (req, res) => {
       res.json({ status: "error", result: error });
     }
 });
-
 
 module.exports = routes;
