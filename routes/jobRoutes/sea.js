@@ -508,4 +508,186 @@ routes.post("/upsertLoadingProgram", async(req, res) => {
     }
 }); 
 
+routes.get("/getJobByValues", async (req, res) => {
+    let value = req.headers;
+  
+    let obj = {
+      createdAt: {
+          [Op.gte]: moment(value.from).toDate(),
+          [Op.lte]: moment(value.to).add(1, 'days').toDate(),
+        }
+    };
+    let newObj = {}
+  
+    if (value.client) {
+      obj.ClientId = value.client;
+    }
+    if (value.final_destination) {
+      obj.fd = value.final_destination;
+    }
+    if (value.shipping_air_line) {
+      obj.shippingLineId = value.shipping_air_line;
+    }
+    if (value.consignee) {
+      obj.consigneeId = value.consignee;
+    }
+    if (value.oversease_agent) {
+      obj.overseasAgentId = value.oversease_agent;
+    }
+    if (value.vessel) {
+      obj.vesselId = value.vessel;
+    }
+    if (value.clearing_agent) {
+      obj.customAgentId = value.clearing_agent;
+    }
+    if (value.vendor) {
+      obj.localVendorId = value.vendor;
+    }
+    if(value.hbl) {
+      newObj.hbl = value.hbl;
+    }
+    if(value.mbl) {
+      newObj.mbl = value.mbl;
+    }
+    try {
+      const jobs = await SE_Job.findAll({
+        where: obj,
+        include:[{
+          model:Bl,
+          where: newObj, 
+          include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
+          { model: Clients, attributes:   ["name"] },
+          { model: Vendors, attributes:   ["name"], as : "local_vendor"},
+          { model: Vendors, attributes:   ["name"], as : "shipping_line"},
+          { model: Vessel , attributes:   ["name"], as :"vessel" },
+          { model: Commodity, attributes: ["name"], as :"commodity" },
+          { model: Employees, attributes: ["name"], as :"sales_representator" },
+          { model: Clients, attributes:   ["name"], as :"shipper" },
+          { model: Clients, attributes:   ["name"], as :"consignee" },
+      ]});
+      res.status(200).json({ result: jobs });
+    } catch (err) {
+      res.status(200).json({ result: err.message });
+    }
+});
+  
+routes.get("/getValuesJobList", async (req, res) => {
+
+    let makeResult = (result, resultTwo) => {
+      let finalResult = { consignee: [], client: [] };
+      result.forEach((x) => {
+        if (x.types.includes("Consignee")) {
+          finalResult.consignee.push({
+            name: `${x.name} (${x.code})`,
+            id: x.id,
+            types: x.types,
+          });
+        }
+      });
+      finalResult.client = resultTwo.map((x) => {
+        return { name: `${x.name} (${x.code})`, id: x.id, types: x.types };
+      });
+      return finalResult;
+    };
+  
+    let makeResultTwo = (result) => {
+      let finalResult = {
+        overseasAgent: [],
+        chaChb: [],
+        sLine: [],
+      };
+      result.forEach((x) => {
+        if (x.types.includes("Overseas Agent")) {
+          finalResult.overseasAgent.push({
+            name: `${x.name} (${x.code})`,
+            id: x.id,
+            types: x.types,
+          });
+        }
+        if (x.types.includes("CHA/CHB")) {
+          finalResult.chaChb.push({
+            name: `${x.name} (${x.code})`,
+            id: x.id,
+            types: x.types,
+          });
+        }
+  
+        if (x.types.includes("Shipping Line")) {
+          finalResult.sLine.push({
+            name: `${x.name} (${x.code})`,
+            id: x.id,
+            types: x.types,
+          });
+        }
+      });
+      return finalResult;
+    };
+
+    try {
+      const resultOne = await Clients.findAll({
+        attributes: ["id", "name", "types", "code"],
+        order: [["createdAt", "DESC"]],
+      });
+      const result = await Clients.findAll({
+        where: {
+          types: {
+            [Op.or]: [{ [Op.substring]: "Consignee" }],
+          },
+        },
+        attributes: ["id", "name", "types", "code"],
+        order: [["createdAt", "DESC"]],
+      });
+      const resultThree = await Vendors.findAll({
+        where: {
+          types: {
+            [Op.or]: [
+              { [Op.substring]: "CHA/CHB" },
+              { [Op.substring]: "Overseas Agent" },
+              { [Op.substring]: "Shipping Line" },
+            ],
+          },
+        },
+        attributes: ["id", "name", "types", "code"],
+        order: [["createdAt", "DESC"]],
+      });
+  
+      const vendor = await Vendors.findAll({
+        attributes: ["id", "name", "types", "code"],
+        order: [["createdAt", "DESC"]],
+      });
+      const resultTwo = await Commodity.findAll({
+        order: [["createdAt", "DESC"]],
+        attributes: ["id", "name", "hs"],
+      });
+  
+      const resultFour = await Vessel.findAll({
+        order: [["createdAt", "DESC"]],
+        attributes: ["id", "name", "code", "carrier"],
+        include: [
+          {
+            model: Voyage,
+          },
+        ],
+      });
+      const Sr = await Employees.findAll({
+        where: { represent: { [Op.substring]: "sr" } },
+        attributes: ["id", "name"],
+      });
+      res.json({
+        status: "success",
+        result: {
+          vendor: vendor,
+          party: makeResult(result, resultOne),
+          vedor_details: makeResultTwo(resultThree),
+          commodity: resultTwo,
+          vessel: resultFour,
+          sr: Sr,
+        },
+      });
+    } catch (error) {
+      res.json({ status: "error", result: error });
+    }
+});
+
+
 module.exports = routes;
