@@ -56,7 +56,9 @@ module.exports = (sequelize, DataTypes) => {
         approved: { 
             type:DataTypes.STRING,
             defaultValue: "0"
-        }
+        },
+        operation: { type:DataTypes.STRING }
+
     })
     return SE_Job;
 }
