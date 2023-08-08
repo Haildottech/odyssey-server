@@ -15,7 +15,7 @@ const { Router } = require("express");
 const moment = require("moment");
 const Op = Sequelize.Op;
 
-//const numCPUs = require('os').cpus().length;
+const numCPUs = require('os').cpus().length;
 // Invoice statuses
 // 1 = unpaid
 // 2 = paid
@@ -511,4 +511,15 @@ routes.get('/getTaskInvoices', async(req, res) => {
     res.json({status: 'error', result: error});
   }
 })
+
+routes.get('/getCPUS', async(req, res) => {
+  try {
+    //const result = await Invoice.findAll({ where: {status: "2" , approved: "1"}})
+    res.json({status: 'success', result: numCPUs});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+})
+
 module.exports = routes;        
