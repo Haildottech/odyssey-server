@@ -233,41 +233,34 @@ routes.post("/addNote", async (req, res) => {
   }
 });
 
-routes.post("/create", async (req, res) => {
-  const createEquip = (list, id) => {
-    let result = [];
-    list.forEach((x) => {
-      if ((x.size != "" && x.qty != "", x.dg != "", x.teu != "")) {
-        delete x.id;
-        result.push({ ...x, SEJobId: id, teu: `${x.teu}` });
-      }
-    });
-    return result;
-  };
-  try {
-    let data = req.body.data;
-    delete data.id;
-    data.customCheck = data.customCheck.toString();
-    data.transportCheck = data.transportCheck.toString();
-    const check = await SE_Job.findOne({
-      order: [["jobId", "DESC"]],
-      attributes: ["jobId"],
-    });
-    const result = await SE_Job.create({
-      ...data,
-      jobId: check == null ? 1 : parseInt(check.jobId) + 1,
-      jobNo: `SNS-SEJ-${
-        check == null ? 1 : parseInt(check.jobId) + 1
-      }/${moment().format("YY")}`,
-    });
-    console.log(result.id);
-    await SE_Equipments.bulkCreate(
-      createEquip(data.equipments, result.id)
-    ).catch((x) => console.log(x));
-    res.json({ status: "success", result: await getJob(result.id) });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.post("/create", async(req, res) => {
+    const createEquip = (list, id) => {
+        let result = [];
+        list.forEach((x)=>{
+            if(x.size!=''&&x.qty!='', x.dg!='', x.teu!=''){
+                delete x.id
+                result.push({...x, SEJobId:id, teu:`${x.teu}`})
+            }
+        })
+        return result;
+    }
+    try {
+        let data = req.body.data
+        delete data.id
+        data.customCheck = data.customCheck.toString();
+        data.transportCheck = data.transportCheck.toString();
+        const check = await SE_Job.findOne({order: [ [ 'jobId', 'DESC' ]], attributes:["jobId"], where:{operation:data.operation}});
+        const result = await SE_Job.create({
+            ...data,
+            jobId:check==null?1:parseInt(check.jobId)+1, jobNo:`SNS-${data.operation}J-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
+        })
+        console.log(result.id)
+        await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
+        res.json({status:'success', result:await getJob(result.id)});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.post("/edit", async (req, res) => {
@@ -301,26 +294,27 @@ routes.post("/edit", async (req, res) => {
     res.json({ status: "error", result: error.message });
   }
 });
-
-routes.get("/get", async (req, res) => {
-  try {
-    const result = await SE_Job.findAll({
-      where: { companyId: req.headers.companyid },
-      include: [
-        { model: Voyage },
-        { model: Employees, as: "created_by", attributes: ["name"] },
-        { model: SE_Equipments },
-        {
-          model: Clients,
-          attributes: ["name"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-    }).catch((x) => console.log(x));
-    res.json({ status: "success", result: result });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+  
+routes.get("/get", async(req, res) => {
+    try {
+        const result = await SE_Job.findAll({
+            where:{companyId:req.headers.companyid},
+            include:[
+                {model:Voyage},
+                {model:Employees, as:'created_by', attributes:['name'] },
+                {model:SE_Equipments},
+                {
+                    model:Clients,
+                    attributes:['name']
+                }
+            ],
+            order:[["createdAt", "DESC"]],
+        }).catch((x)=>console.log(x))
+        res.json({status:'success', result:result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.get("/getJobById", async (req, res) => {
@@ -353,25 +347,26 @@ routes.get("/getSEJobIds", async (req, res) => {
   }
 });
 
-routes.get("/getSEJobById", async (req, res) => {
-  try {
-    const result = await SE_Job.findOne({
-      where: { id: req.headers.id },
-      include: [
-        { model: Bl, attributes: ["id"] },
-        { model: Voyage },
-        { model: SE_Equipments },
-        {
-          model: Clients,
-          attributes: ["name"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
-    res.json({ status: "success", result: result });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.get("/getSEJobById", async(req, res) => {
+    try {
+        const result = await SE_Job.findOne({
+            where:{id:req.headers.id},
+            include:[
+                {model:Bl, attributes:['id']},
+                {model:Voyage},
+                {model:SE_Equipments},
+                {
+                    model:Clients,
+                    attributes:['name']
+                }
+            ],
+            order:[["createdAt", "DESC"]],
+        });
+        res.json({status:'success', result:result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.get("/getJobsWithoutBl", async (req, res) => {
@@ -389,30 +384,24 @@ routes.get("/getJobsWithoutBl", async (req, res) => {
   ];
   try {
     const result = await SE_Job.findAll({
-      //where:{"approved": "true"},
-      attributes: [
-        "id",
-        "jobNo",
-        "pol",
-        "pod",
-        "fd",
-        "jobDate",
-        "shipDate",
-        "cutOffDate",
-        "delivery",
-        "freightType",
-      ],
-      order: [["createdAt", "DESC"]],
-      include: [
-        { model: Bl },
-        { model: SE_Equipments, attributes: ["qty", "size"] },
-        { model: Clients, attributes: attr },
-        { model: Clients, as: "consignee", attributes: attr },
-        { model: Clients, as: "shipper", attributes: attr },
-        { model: Vendors, as: "overseas_agent", attributes: attr },
-        { model: Commodity, as: "commodity" },
-        { model: Vessel, as: "vessel", attributes: ["name"] },
-      ],
+        //where:{"approved": "true"},
+        attributes:[
+            'id', 'jobNo', 'pol',
+            'pod', 'fd', 'jobDate',
+            'shipDate', 'cutOffDate',
+            'delivery', 'freightType'
+        ],
+        order:[["createdAt", "DESC"]],
+        include:[
+            { model:Bl },
+            { model:SE_Equipments, attributes:['qty', 'size'] },
+            { model:Clients,  attributes:attr },
+            { model:Clients, as:'consignee', attributes:attr },
+            { model:Clients, as:'shipper', attributes:attr },
+            { model:Vendors, as:'overseas_agent', attributes:attr },
+            { model:Commodity, as:'commodity' },
+            { model:Vessel, as:'vessel', attributes:['name'] }
+        ]
     });
     res.json({ status: "success", result: result });
   } catch (error) {
@@ -420,29 +409,23 @@ routes.get("/getJobsWithoutBl", async (req, res) => {
   }
 });
 
-routes.post("/createBl", async (req, res) => {
-  try {
-    let data = req.body;
-    delete data.id;
-    const check = await Bl.findOne({
-      order: [["no", "DESC"]],
-      attributes: ["no"],
-    });
-    const result = await Bl.create({
-      ...data,
-      no: check == null ? 1 : parseInt(check.no) + 1,
-      hbl: `SNSL${check == null ? 1 : parseInt(check.no) + 1}`,
-    }).catch((x) => console.log(x));
-    await data.Container_Infos.forEach((x, i) => {
-      data.Container_Infos[i] = { ...x, BlId: result.id };
-    });
-    await Container_Info.bulkCreate(data.Container_Infos).catch((x) =>
-      console.log(x)
-    );
-    res.json({ status: "success", result: result.id });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.post("/createBl", async(req, res) => {
+    try {
+        let data = req.body;
+        delete data.id
+        const check = await Bl.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"]})
+        const result = await Bl.create({...data, 
+            no:check==null?1:parseInt(check.no)+1, hbl:`SNSL${check==null?1:parseInt(check.no)+1}`
+        }).catch((x)=>console.log(x))
+        await data.Container_Infos.forEach((x, i)=>{
+            data.Container_Infos[i] = {...x, BlId:result.id}
+        })
+        await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
+        res.json({status:'success', result:result.id  });
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.post("/editBl", async (req, res) => {
@@ -733,71 +716,16 @@ routes.get("/getValuesJobList", async (req, res) => {
   }
 });
 
-routes.get("/getJobByValues", async (req, res) => {
-  let value = req.headers;
-
-  let obj = {
-    createdAt: {
-        [Op.gte]: moment(value.from).toDate(),
-        [Op.lte]: moment(value.to).add(1, 'days').toDate(),
-      }
-  };
-  let newObj = {}
-
-  if (value.client) {
-    obj.ClientId = value.client;
-  }
-  if (value.final_destination) {
-    obj.fd = value.final_destination;
-  }
-  if (value.shipping_air_line) {
-    obj.shippingLineId = value.shipping_air_line;
-  }
-  if (value.consignee) {
-    obj.consigneeId = value.consignee;
-  }
-  if (value.oversease_agent) {
-    obj.overseasAgentId = value.oversease_agent;
-  }
-  if (value.vessel) {
-    obj.vesselId = value.vessel;
-  }
-  if (value.clearing_agent) {
-    obj.customAgentId = value.clearing_agent;
-  }
-  if (value.vendor) {
-    obj.localVendorId = value.vendor;
-  }
-  if(value.hbl) {
-    newObj.hbl = value.hbl;
-  }
-  if(value.mbl) {
-    newObj.mbl = value.mbl;
-  }
-  try {
-    console.log(obj )
-    const jobs = await SE_Job.findAll({
-      where: obj,
-      include:[{
-        model:Bl,
-        where: newObj, 
-        include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
-        { model: Clients, attributes:   ["name"] },
-        { model: Vendors, attributes:   ["name"], as : "local_vendor"},
-        { model: Vendors, attributes:   ["name"], as : "shipping_line"},
-        { model: Vessel , attributes:   ["name"], as :"vessel" },
-        { model: Commodity, attributes: ["name"], as :"commodity" },
-        { model: Employees, attributes: ["name"], as :"sales_representator" },
-        { model: Clients, attributes:   ["name"], as :"shipper" },
-        { model: Clients, attributes:   ["name"], as :"consignee" },
-      
-      ]});
-
-
-    res.status(200).json({ result: jobs });
-  } catch (err) {
-    res.status(200).json({ result: err.message });
-  }
-});
+routes.post("/upsertLoadingProgram", async(req, res) => {
+    try {
+        const result = await Loading_Program.upsert(req.body)
+        .catch((x)=>console.log(x))
+        res.json({status:'success', result:result});
+        console.log(req.body)
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
+}); 
 
 module.exports = routes;

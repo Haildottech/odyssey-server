@@ -14,8 +14,8 @@ const Sequelize = require('sequelize');
 const { Router } = require("express");
 const moment = require("moment");
 const Op = Sequelize.Op;
-//const numCPUs = require('os').cpus().length;
 
+const numCPUs = require('os').cpus().length;
 // Invoice statuses
 // 1 = unpaid
 // 2 = paid
@@ -23,10 +23,10 @@ const Op = Sequelize.Op;
 
 const chardHeadLogic = (currency) => {
   let result={};
-      if(currency!=undefined){
-        result = { currency:currency }
-      }
-      return result;
+  if(currency!=undefined){
+    result = { currency:currency }
+  }
+  return result;
 }
 
 routes.post("/approveCharges", async(req, res) => {
@@ -443,25 +443,25 @@ routes.post("/makeInvoiceNew", async(req, res) => {
     await result.forEach(async(x)=>{
       if(x.invoiceType=="Job Bill"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastJB, "JB", "Job Bill", req.body.companyId,"SE", x)
+          createdInvoice = createInvoices(lastJB, "JB", "Job Bill", req.body.companyId, req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Job Invoice"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastJI, "JI", "Job Invoice", req.body.companyId,"SE", x)
+          createdInvoice = createInvoices(lastJI, "JI", "Job Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Invoice"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastAI, "AI", "Agent Invoice", req.body.companyId,"SE", x)
+          createdInvoice = createInvoices(lastAI, "AI", "Agent Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Bill"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastAB, "AB", "Agent Bill", req.body.companyId,"SE", x)
+          createdInvoice = createInvoices(lastAB, "AB", "Agent Bill", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
@@ -502,8 +502,6 @@ routes.get("/getInvoices", async(req, res) =>{
   }
 })
 
-
-
 routes.get('/getTaskInvoices', async(req, res) => {
   try {
     const result = await Invoice.findAll({ where: {status: "2" , approved: "1"}})
@@ -513,4 +511,15 @@ routes.get('/getTaskInvoices', async(req, res) => {
     res.json({status: 'error', result: error});
   }
 })
+
+routes.get('/getCPUS', async(req, res) => {
+  try {
+    //const result = await Invoice.findAll({ where: {status: "2" , approved: "1"}})
+    res.json({status: 'success', result: numCPUs});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+})
+
 module.exports = routes;        

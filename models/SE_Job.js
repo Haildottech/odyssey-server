@@ -27,7 +27,9 @@ module.exports = (sequelize, DataTypes) => {
         nomination: { type:DataTypes.STRING },
         transportCheck: { type:DataTypes.STRING },
         customCheck: { type:DataTypes.STRING },
+        etd: { type:DataTypes.STRING },
         eta: { type:DataTypes.STRING },
+        cbkg: { type:DataTypes.STRING },
         aesDate: { type:DataTypes.STRING },
         aesTime: { type:DataTypes.STRING },
         eRcDate: { type:DataTypes.STRING },
@@ -57,8 +59,7 @@ module.exports = (sequelize, DataTypes) => {
             type:DataTypes.STRING,
             defaultValue: "0"
         },
-        operation: { type:DataTypes.STRING }
-
+        operation:{ type:DataTypes.STRING }
     })
     return SE_Job;
 }
