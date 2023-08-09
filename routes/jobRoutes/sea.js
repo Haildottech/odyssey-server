@@ -690,24 +690,24 @@ routes.get("/getValuesJobList", async (req, res) => {
 });
 
 
-// routes.get("/getDeliveryOrder", async(req, res) => {
-//   try {
-//       const result = await Delivery_Order.findOne({
-//           where:{SEJobId:req.headers.id},
-//       });
-//       res.json({status:'success', result:result});
-//   }
-//   catch (error) {
-//     res.json({status:'error', result:error});
-//   }
-// }); 
+routes.get("/getDeliveryOrder", async(req, res) => {
+  try {
+      const result = await Delivery_Order.findOne({
+          where:{SEJobId:req.headers.id},
+      });
+      res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+}); 
 
 routes.post("/upsertDeliveryOrder", async(req, res) => {
-  console.log(req.body)
   try {
     
     if(!req.body.doNo){
-      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
+
+      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
         ...req.body, 
@@ -716,8 +716,7 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
       }).catch((x)=>console.log(x))
 
     } else {
-
-     const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
+     const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
         ...req.body, 
@@ -729,7 +728,8 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
     res.json({status:'success'});
   }
   catch (error) {
-    res.json({status:'error', result:error});
+    console.log(error.message)
+    res.json({status:'error', result:error.message});
   }
 });
 
