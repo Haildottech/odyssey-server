@@ -703,11 +703,16 @@ routes.get("/getDeliveryOrder", async(req, res) => {
 }); 
 
 routes.post("/upsertDeliveryOrder", async(req, res) => {
+  // let types = ""
+  // req.body.type.forEach((x, i)=>{
+  //   types = `${types}${i!=0?",":""} ${x}`
+  // })
+  let data = {...req.body, type:req.body.type.toString()};
+  console.log(data)
   try {
     
     if(!req.body.doNo){
-
-      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
+      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
         ...req.body, 
@@ -716,7 +721,8 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
       }).catch((x)=>console.log(x))
 
     } else {
-     const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
+      console.log("Bottom")
+     const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
         ...req.body, 
