@@ -1,12 +1,4 @@
-const {
-  SE_Job,
-  SE_Equipments,
-  Container_Info,
-  Bl,
-  Stamps,
-  Job_notes,
-  Loading_Program,
-} = require("../../functions/Associations/jobAssociations/seaExport");
+const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Program } = require("../../functions/Associations/jobAssociations/seaExport");
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
 const {
   Employees,
@@ -212,25 +204,25 @@ routes.get("/getAllNotes", async (req, res) => {
   }
 });
 
-routes.post("/updateNotes", async (req, res) => {
-  try {
-    const result = await Job_notes.update(
-      { opened: req.body.data.opened },
-      { where: { recordId: req.body.data.recordId } }
-    );
-    res.json({ status: "success", result: result });
-  } catch (err) {
-    res.json({ status: "error", result: err.message });
-  }
-});
-routes.post("/addNote", async (req, res) => {
-  try {
-    console.log(req.body);
-    const result = await Job_notes.create(req.body);
-    res.json({ status: "success", result: result });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.post('/updateNotes', async(req, res) => {
+    try {
+     const result =  await Job_notes.update({opened : req.body.data.opened}, {where : {recordId : req.body.data.recordId}})
+     res.json({ status: "success", result:result})
+    }
+    catch (err) {
+     res.json({ status: "error", result:err.message})
+ 
+    }
+ })
+routes.post("/addNote", async(req, res) => {
+    try {
+        console.log(req.body)
+        const result = await Job_notes.create(req.body);
+        res.json({status:'success', result:result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.post("/create", async (req, res) => {
@@ -353,25 +345,27 @@ routes.get("/getSEJobIds", async (req, res) => {
   }
 });
 
-routes.get("/getSEJobById", async (req, res) => {
-  try {
-    const result = await SE_Job.findOne({
-      where: { id: req.headers.id },
-      include: [
-        { model: Bl, attributes: ["id"] },
-        { model: Voyage },
-        { model: SE_Equipments },
-        {
-          model: Clients,
-          attributes: ["name"],
-        },
-      ],
-      order: [["createdAt", "DESC"]],
-    });
-    res.json({ status: "success", result: result });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.get("/getSEJobById", async(req, res) => {
+    
+    try {
+        const result = await SE_Job.findOne({
+            where:{id:req.headers.id},
+            include:[
+                {model:Bl, attributes:['id', 'hbl', 'hblDate', 'mbl', 'mblDate']},
+                {model:Voyage},
+                {model:SE_Equipments},
+                {
+                    model:Clients,
+                    attributes:['name']
+                }
+            ],
+            order:[["createdAt", "DESC"]],
+        });
+        res.json({status:'success', result:result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.get("/getJobsWithoutBl", async (req, res) => {
@@ -389,30 +383,28 @@ routes.get("/getJobsWithoutBl", async (req, res) => {
   ];
   try {
     const result = await SE_Job.findAll({
-      //where:{"approved": "true"},
-      attributes: [
-        "id",
-        "jobNo",
-        "pol",
-        "pod",
-        "fd",
-        "jobDate",
-        "shipDate",
-        "cutOffDate",
-        "delivery",
-        "freightType",
-      ],
-      order: [["createdAt", "DESC"]],
-      include: [
-        { model: Bl },
-        { model: SE_Equipments, attributes: ["qty", "size"] },
-        { model: Clients, attributes: attr },
-        { model: Clients, as: "consignee", attributes: attr },
-        { model: Clients, as: "shipper", attributes: attr },
-        { model: Vendors, as: "overseas_agent", attributes: attr },
-        { model: Commodity, as: "commodity" },
-        { model: Vessel, as: "vessel", attributes: ["name"] },
-      ],
+        where:{id:req.headers.id},
+        attributes:[
+            'id', 'jobNo', 'pol',
+            'pod', 'fd', 'jobDate',
+            'shipDate', 'cutOffDate',
+            'delivery', 'freightType',
+            'operation'
+        ],
+        order:[["createdAt", "DESC"]],
+        include:[
+            {
+                model:Bl,
+                required: false,
+            },
+            { model:SE_Equipments, attributes:['qty', 'size'] },
+            { model:Clients,  attributes:attr },
+            { model:Clients, as:'consignee', attributes:attr },
+            { model:Clients, as:'shipper', attributes:attr },
+            { model:Vendors, as:'overseas_agent', attributes:attr },
+            { model:Commodity, as:'commodity' },
+            { model:Vessel, as:'vessel', attributes:['name'] }
+        ],
     });
     res.json({ status: "success", result: result });
   } catch (error) {
@@ -502,52 +494,39 @@ routes.post("/editBl", async (req, res) => {
   }
 });
 
-routes.post("/findJobByNo", async (req, res) => {
-  try {
-    const attr = [
-      "name",
-      "address1",
-      "address1",
-      "person1",
-      "mobile1",
-      "person2",
-      "mobile2",
-      "telephone1",
-      "telephone2",
-      "infoMail",
-    ];
-    const result = await SE_Job.findAll({
-      where: { jobNo: req.body.no },
-      attributes: [
-        "id",
-        "jobNo",
-        "pol",
-        "pod",
-        "fd",
-        "jobDate",
-        "shipDate",
-        "cutOffDate",
-        "delivery",
-        "freightType",
-        "freightPaybleAt",
-        "VoyageId",
-      ],
-      order: [["createdAt", "DESC"]],
-      include: [
-        { model: SE_Equipments, attributes: ["qty", "size"] },
-        { model: Clients, attributes: attr },
-        { model: Clients, as: "consignee", attributes: attr },
-        { model: Clients, as: "shipper", attributes: attr },
-        { model: Vendors, as: "overseas_agent", attributes: attr },
-        { model: Commodity, as: "commodity" },
-        { model: Vessel, as: "vessel", attributes: ["name"] },
-        { model: Voyage, attributes: ["voyage"] },
-      ],
-    });
-    res.json({ status: "success", result: result });
-  } catch (error) {
-    res.json({ status: "error", result: error });
-  }
+routes.post("/findJobByNo", async(req, res) => {
+    try {
+        const attr = [
+            'name', 'address1', 'address1', 'person1', 'mobile1',
+            'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+        ]
+        const result = await SE_Job.findAll({
+            where:{jobNo:req.body.no},
+            attributes:[
+                'id', 'jobNo', 'pol',
+                'pod', 'fd', 'jobDate',
+                'shipDate', 'cutOffDate',
+                'delivery', 'freightType',
+                'freightPaybleAt','VoyageId'
+            ],
+            order:[["createdAt", "DESC"]],
+            include:[
+                { model:SE_Equipments, attributes:['qty', 'size'] },
+                { model:Clients,  attributes:attr },
+                { model:Clients, as:'consignee', attributes:attr },
+                { model:Clients, as:'shipper', attributes:attr },
+                { model:Vendors, as:'overseas_agent', attributes:attr },
+                { model:Commodity, as:'commodity' },
+                { model:Vessel,  as:'vessel', attributes:['name'] },
+                { model:Voyage, attributes:['voyage'] },
+                
+            ]
+        });
+        res.json({status:'success', result:result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
 });
 
 routes.get("/getAllBls", async (req, res) => {
@@ -733,71 +712,5 @@ routes.get("/getValuesJobList", async (req, res) => {
   }
 });
 
-routes.get("/getJobByValues", async (req, res) => {
-  let value = req.headers;
-
-  let obj = {
-    createdAt: {
-        [Op.gte]: moment(value.from).toDate(),
-        [Op.lte]: moment(value.to).add(1, 'days').toDate(),
-      }
-  };
-  let newObj = {}
-
-  if (value.client) {
-    obj.ClientId = value.client;
-  }
-  if (value.final_destination) {
-    obj.fd = value.final_destination;
-  }
-  if (value.shipping_air_line) {
-    obj.shippingLineId = value.shipping_air_line;
-  }
-  if (value.consignee) {
-    obj.consigneeId = value.consignee;
-  }
-  if (value.oversease_agent) {
-    obj.overseasAgentId = value.oversease_agent;
-  }
-  if (value.vessel) {
-    obj.vesselId = value.vessel;
-  }
-  if (value.clearing_agent) {
-    obj.customAgentId = value.clearing_agent;
-  }
-  if (value.vendor) {
-    obj.localVendorId = value.vendor;
-  }
-  if(value.hbl) {
-    newObj.hbl = value.hbl;
-  }
-  if(value.mbl) {
-    newObj.mbl = value.mbl;
-  }
-  try {
-    console.log(obj )
-    const jobs = await SE_Job.findAll({
-      where: obj,
-      include:[{
-        model:Bl,
-        where: newObj, 
-        include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
-        { model: Clients, attributes:   ["name"] },
-        { model: Vendors, attributes:   ["name"], as : "local_vendor"},
-        { model: Vendors, attributes:   ["name"], as : "shipping_line"},
-        { model: Vessel , attributes:   ["name"], as :"vessel" },
-        { model: Commodity, attributes: ["name"], as :"commodity" },
-        { model: Employees, attributes: ["name"], as :"sales_representator" },
-        { model: Clients, attributes:   ["name"], as :"shipper" },
-        { model: Clients, attributes:   ["name"], as :"consignee" },
-      
-      ]});
-
-
-    res.status(200).json({ result: jobs });
-  } catch (err) {
-    res.status(200).json({ result: err.message });
-  }
-});
 
 module.exports = routes;

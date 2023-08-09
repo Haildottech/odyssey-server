@@ -26,7 +26,7 @@ const notificationRoutes = require('./routes/notifications');
 const assignedTasks = require('./routes/assignTasks');
 const nonGlParties = require('./routes/nonGlParties')
 
-const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes } = require('./functions/Associations/jobAssociations/seaExport');
+const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes, Delivery_Order } = require('./functions/Associations/jobAssociations/seaExport');
 const { Vendors, Vendor_Associations } = require('./functions/Associations/vendorAssociations');
 const {Clients, Client_Associations} = require('./functions/Associations/clientAssociation');
 const {Vouchers, Voucher_Heads} = require('./functions/Associations/voucherAssociations');
