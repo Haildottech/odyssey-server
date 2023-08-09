@@ -703,10 +703,16 @@ routes.get("/getValuesJobList", async (req, res) => {
 // }); 
 
 routes.post("/upsertDeliveryOrder", async(req, res) => {
-  console.log(req.body)
+  // let types = ""
+  // req.body.type.forEach((x, i)=>{
+  //   types = `${types}${i!=0?",":""} ${x}`
+  // })
+  let data = {...req.body, type:req.body.type.toString()};
+  console.log(data)
   try {
     
     if(!req.body.doNo){
+      console.log("Top")
       const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
@@ -716,7 +722,7 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
       }).catch((x)=>console.log(x))
 
     } else {
-
+      console.log("Bottom")
      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:data.operation, companyId:req.body,companyId}})
       .catch((e) => console.log(e));
       await Delivery_Order.upsert({
