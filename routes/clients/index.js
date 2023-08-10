@@ -12,7 +12,7 @@ routes.post("/createClient", async(req, res) => {
     const createChildAccounts = (list, name) => {
         let result = [];
         list.forEach((x)=>{
-            result.push({title:name+ `${x.title=="Accounts Recievable"?" Recievable":" Payble"}`, ParentAccountId:x.id})
+            result.push({title:name+ `${x.title=="ACCOUNT RECEIVABLE"?" RECEIVABLE":" PAYABLE"}`, ParentAccountId:x.id, subCategory:'Client'})
         })
         return result;
     }
