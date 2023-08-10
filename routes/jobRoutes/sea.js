@@ -704,30 +704,35 @@ routes.get("/getDeliveryOrder", async(req, res) => {
 
 routes.post("/upsertDeliveryOrder", async(req, res) => {
 
-  console.log(req.body.id)
+  console.log(req.body)
   let result
   try {
     
     if(!req.body.doNo){
+
       const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
-     result = await Delivery_Order.upsert({
+
+      result = await Delivery_Order.upsert({
         ...req.body, 
-        no:check==null?1:parseInt(check)+1, 
-        doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check)+1}-${moment().format("YY")}`
+        no:check==null?1:parseInt(check.no)+1, 
+        doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check.no)+1}-${moment().format("YY")}`
       }).catch((x)=>console.log(x))
 
     } else {
-     const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
-      .catch((e) => console.log(e));
+      let check;
+
+      !req.body.id?check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}}):
+      null
+
       result = await Delivery_Order.upsert({
         ...req.body, 
-        no:check==null?1:parseInt(check)+1, 
-        doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check)+1}-${moment().format("YY")}`
+        no:!req.body.id? check==null?1:parseInt(check.no)+1 : req.body.no, 
+        doNo:req.body.doNo
       }).catch((x)=>console.log(x))
 
   }
-  res.json({status:'success', result : result});
+  res.json({status:'success', result: result});
   }
   catch (error) {
     console.log(error.message)
