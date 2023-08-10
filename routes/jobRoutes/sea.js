@@ -705,12 +705,13 @@ routes.get("/getDeliveryOrder", async(req, res) => {
 routes.post("/upsertDeliveryOrder", async(req, res) => {
 
   console.log(req.body.id)
+  let result
   try {
     
     if(!req.body.doNo){
       const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
-      await Delivery_Order.upsert({
+     result = await Delivery_Order.upsert({
         ...req.body, 
         no:check==null?1:parseInt(check)+1, 
         doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check)+1}-${moment().format("YY")}`
@@ -719,14 +720,14 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
     } else {
      const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
-     const result = await Delivery_Order.upsert({
+      result = await Delivery_Order.upsert({
         ...req.body, 
         no:check==null?1:parseInt(check)+1, 
         doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check)+1}-${moment().format("YY")}`
       }).catch((x)=>console.log(x))
 
   }
-  res.json({status:'success'});
+  res.json({status:'success', result : result});
   }
   catch (error) {
     console.log(error.message)
