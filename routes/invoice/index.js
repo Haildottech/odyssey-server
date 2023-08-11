@@ -187,7 +187,6 @@ routes.get("/getFilteredInvoices", async(req, res) => {
 
 routes.get("/getInvoiceByNo", async(req, res) => {
   try {
-      console.log("req.headers", req.headers)
       const attr = [
         'name', 'address1', 'address1', 'person1', 'mobile1',
         'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
@@ -491,7 +490,7 @@ routes.get("/getInvoices", async(req, res) =>{
   try {
     const result = await Invoice.findAll({
       where: {SEJobId: req.headers.id},
-      attributes: ['invoice_No', 'payType', 'total', 'recieved'],
+      attributes: ['invoice_No', 'payType', 'total', 'recieved', 'ex_rate'],
       include:[{
         model:Charge_Head,
         attributes:['charge'],

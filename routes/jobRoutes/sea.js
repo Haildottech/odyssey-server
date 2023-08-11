@@ -694,7 +694,7 @@ routes.get("/getDeliveryOrder", async(req, res) => {
   try {
       const result = await Delivery_Order.findOne({
           where:{SEJobId:req.headers.id},
-      });
+      }).catch((x)=>console.log(x))
       res.json({status:'success', result:result});
   }
   catch (error) {

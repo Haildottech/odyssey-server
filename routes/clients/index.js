@@ -1,4 +1,5 @@
-const { Op } = require("sequelize");
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const db = require("../../models");
 const routes = require('express').Router();
 const { History } = require("../../functions/Associations/historyAssociations");
@@ -38,12 +39,27 @@ routes.post("/createClient", async(req, res) => {
         value.operations = value.operations.join(', ');
         value.types = value.types.join(', ');
         delete value.id
-        const check = await Clients.max('code');
+        const check = await Clients.findOne({
+            where:{
+                [Op.and]: [
+                    { code: { [Op.ne]: 'CU-00633' } },
+                    { code: { [Op.ne]: 'CC-00884' } },
+                    { code: { [Op.ne]: 'CU-00647' } },
+                    { code: { [Op.ne]: 'CU-00013' } },
+                    { code: { [Op.ne]: 'CU-00721' } },
+                    { code: { [Op.ne]: 'CU-00902' } },
+                    { code: { [Op.ne]: 'CU-00146' } },
+                    { code: { [Op.ne]: 'CC-11914' } },
+                ]
+            },
+            attributes:['code'],
+            order: [ [ 'createdAt', 'DESC' ]]
+        })
         value.accountRepresentatorId = value.accountRepresentatorId==""?null:value.accountRepresentatorId;
         value.salesRepresentatorId = value.salesRepresentatorId==""?null:value.salesRepresentatorId;
         value.docRepresentatorId = value.docRepresentatorId==""?null:value.docRepresentatorId;
         value.authorizedById = value.authorizedById==""?null:value.authorizedById;
-        const result = await Clients.create({...value, code : parseInt(check) + 1 }).catch((x)=>console.log(x))
+        const result = await Clients.create({...value, code : parseInt(check.code) + 1 }).catch((x)=>console.log(x))
         const accounts = await Parent_Account.findAll({
             where: {
                 CompanyId: { [Op.or]: value.companies },
@@ -52,14 +68,7 @@ routes.post("/createClient", async(req, res) => {
         });
         const accountsList = await Child_Account.bulkCreate(createChildAccounts(accounts, result.name));
         await Client_Associations.bulkCreate(createAccountList(accounts, accountsList, result.id));
-
-        const finalResult = await Clients.findOne({
-            where:{id:result.id},
-            include:[{
-                model:Client_Associations
-            }]
-        });
-        res.json({status:'success', result:   finalResult});
+        res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});

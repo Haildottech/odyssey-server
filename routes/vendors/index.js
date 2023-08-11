@@ -38,10 +38,13 @@ routes.post("/create", async(req, res) => {
 
         let parentAccountList = [{id:3, CompanyId:1}, {id:4, CompanyId:2}, {id:7, CompanyId:3},{id:2, CompanyId:1}, {id:5, CompanyId:2}, {id:6, CompanyId:3}]
         delete value.id;
-        const check = await Vendors.max('code');
+        const check = await Vendors.findOne({
+            attributes:['code'],
+            order: [ [ 'createdAt', 'DESC' ]]
+        })
         value.accountRepresentatorId = value.accountRepresentatorId==""?null:value.accountRepresentatorId;
         value.authorizedById = value.authorizedById==""?null:value.authorizedById;
-        const result = await Vendors.create({...value, code: parseInt(check) + 1});//.catch((x)=>console.log(x))
+        const result = await Vendors.create({...value, code: parseInt(check.code) + 1});//.catch((x)=>console.log(x))
         const accounts = await Parent_Account.findAll({
             where: {
                 CompanyId: {[Op.or]:[1, 2, 3]},
@@ -50,7 +53,8 @@ routes.post("/create", async(req, res) => {
         });
         const accountsList = await Child_Account.bulkCreate(createChildAccounts(accounts, result.name));
         await Vendor_Associations.bulkCreate(createAccountList(accounts, accountsList, result.id));
-        res.json({status:'success'});
+
+        res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
