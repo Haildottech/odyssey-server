@@ -41,25 +41,28 @@ routes.get("/getValues", async(req, res) => {
         return finalResult
     }
     let makeResultTwo = (result) => {
-    let finalResult = {transporter:[], forwarder:[], overseasAgent:[], localVendor:[], chaChb:[], sLine:[]};
+    let finalResult = { transporter:[], forwarder:[], overseasAgent:[], localVendor:[], chaChb:[], sLine:[], airLine:[] };
     result.forEach((x) => {
+        if(x.types.includes('Air Line')){
+          finalResult.airLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+        }
         if(x.types.includes('Transporter')){
-            finalResult.transporter.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.transporter.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
         if(x.types.includes('Forwarder/Coloader')){
-            finalResult.forwarder.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.forwarder.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
         if(x.types.includes('Overseas Agent')){
-            finalResult.overseasAgent.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.overseasAgent.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
         if(x.types.includes('CHA/CHB')){
-            finalResult.chaChb.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.chaChb.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
         if(x.types.includes('Local Vendor')){
-            finalResult.localVendor.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.localVendor.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
         if(x.types.includes('Shipping Line')){
-            finalResult.sLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+          finalResult.sLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
     })
     return finalResult
@@ -89,6 +92,7 @@ routes.get("/getValues", async(req, res) => {
                     { [Op.substring]: 'Local Vendor' },
                     { [Op.substring]: 'CHA/CHB' },
                     { [Op.substring]: 'Overseas Agent' },
+                    { [Op.substring]: 'Air Line' },
                     { [Op.substring]: 'Shipping Line' }
                 ]
             }},
@@ -163,7 +167,8 @@ routes.post('/updateNotes', async(req, res) => {
      res.json({ status: "error", result:err.message})
  
     }
- })
+});
+
 routes.post("/addNote", async(req, res) => {
     try {
         console.log(req.body)
@@ -191,12 +196,17 @@ routes.post("/create", async(req, res) => {
         delete data.id
         data.customCheck = data.customCheck.toString();
         data.transportCheck = data.transportCheck.toString();
+        if(data.operation=="AE"||data.operation=="AI"){
+          data.vesselId = null
+        } else {
+          data.airLineId=null
+        }
         const check = await SE_Job.findOne({order: [ [ 'jobId', 'DESC' ]], attributes:["jobId"], where:{operation:data.operation}});
         const result = await SE_Job.create({
             ...data,
-            jobId:check==null?1:parseInt(check.jobId)+1, jobNo:`SNS-${data.operation}J-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
-        })
-        console.log(result.id)
+            jobId:check==null?1:parseInt(check.jobId)+1,
+            jobNo:`${data.companyId=="1"?"SNS":data.companyId=="2"?"CLS":"ACS"}-${data.operation}${data.operation=="SE"?"J":data.operation=="SI"?"J":""}-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
+        }).catch((x)=>console.log(x.message))
         await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
         res.json({status:'success', result:await getJob(result.id)});
     }
@@ -231,7 +241,7 @@ routes.post("/edit", async(req, res) => {
       res.json({status:'error', result:error.message});
     }
 });
-  
+
 routes.get("/get", async(req, res) => {
     console.log(req.headers)
     try {
@@ -291,7 +301,6 @@ routes.get("/getSEJobIds", async(req, res) => {
 });
 
 routes.get("/getSEJobById", async(req, res) => {
-    
     try {
         const result = await SE_Job.findOne({
             where:{id:req.headers.id},
@@ -314,10 +323,12 @@ routes.get("/getSEJobById", async(req, res) => {
 });
 
 routes.get("/getJobsWithoutBl", async(req, res) => {
+
     const attr = [
         'name', 'address1', 'address1', 'person1', 'mobile1',
         'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
-    ]
+    ];
+
     try {
     const result = await SE_Job.findAll({
         where:{id:req.headers.id},
@@ -326,7 +337,7 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
             'pod', 'fd', 'jobDate',
             'shipDate', 'cutOffDate',
             'delivery', 'freightType',
-            'operation'
+            'operation', 'flightNo','VoyageId'
         ],
         order:[["createdAt", "DESC"]],
         include:[
@@ -340,7 +351,10 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
             { model:Clients, as:'shipper', attributes:attr },
             { model:Vendors, as:'overseas_agent', attributes:attr },
             { model:Commodity, as:'commodity' },
-            { model:Vessel, as:'vessel', attributes:['name'] }
+            { model:Vessel, as:'vessel', attributes:['name'] },
+            { model:Vendors, as:'air_line', attributes:['name'] },
+            { model:Vendors, as:'shipping_line', attributes:['name'] },
+            { model:Voyage, attributes:['voyage'] },
         ],
     });
     res.json({status:'success', result:result});
@@ -349,6 +363,7 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
       res.json({status:'error', result:error});
     }
 });
+
 
 routes.post("/createBl", async(req, res) => {
     try {
@@ -415,7 +430,7 @@ routes.post("/findJobByNo", async(req, res) => {
                 'pod', 'fd', 'jobDate',
                 'shipDate', 'cutOffDate',
                 'delivery', 'freightType',
-                'freightPaybleAt','VoyageId'
+                'freightPaybleAt','VoyageId', 'flightNo'
             ],
             order:[["createdAt", "DESC"]],
             include:[
@@ -426,7 +441,10 @@ routes.post("/findJobByNo", async(req, res) => {
                 { model:Vendors, as:'overseas_agent', attributes:attr },
                 { model:Commodity, as:'commodity' },
                 { model:Vessel,  as:'vessel', attributes:['name'] },
+                { model:Vendors, as:'air_line', attributes:['name'] },
+                { model:Vendors, as:'shipping_line', attributes:['name'] },
                 { model:Voyage, attributes:['voyage'] },
+                
                 
             ]
         });
@@ -570,7 +588,7 @@ routes.get("/getJobByValues", async (req, res) => {
       res.status(200).json({ result: err.message });
     }
 });
-  
+
 routes.get("/getValuesJobList", async (req, res) => {
 
     let makeResult = (result, resultTwo) => {
@@ -689,7 +707,6 @@ routes.get("/getValuesJobList", async (req, res) => {
     }
 });
 
-
 routes.get("/getDeliveryOrder", async(req, res) => {
   try {
       const result = await Delivery_Order.findOne({
@@ -739,6 +756,5 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
     res.json({status:'error', result:error.message});
   }
 });
-
 
 module.exports = routes;

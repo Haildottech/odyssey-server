@@ -65,7 +65,6 @@ Bl.hasMany(Stamps, {
         allowNull:false
     }
 })
-
 Stamps.belongsTo(Bl)
 
 SE_Job.hasMany(Job_notes, {
@@ -74,7 +73,6 @@ SE_Job.hasMany(Job_notes, {
         allowNull:false
     }
 })
-
 Job_notes.belongsTo(SE_Job)
 
 SE_Job.hasOne(Delivery_Order, {
@@ -83,7 +81,6 @@ SE_Job.hasOne(Delivery_Order, {
         allowNull:false
     }
 })
-
 Delivery_Order.belongsTo(SE_Job)
 
 // Job_notes.belongsTo(SE_Job, {as:"record"          });
@@ -99,6 +96,7 @@ SE_Job.belongsTo(Vendors,   {as:'custom_agent'       });
 SE_Job.belongsTo(Vendors,   {as:'local_vendor'       });
 SE_Job.belongsTo(Vendors,   {as:'overseas_agent'     });
 SE_Job.belongsTo(Vendors,   {as:'shipping_line'      });
+SE_Job.belongsTo(Vendors,   {as:'air_line'           });
 SE_Job.belongsTo(Clients,   {as:'shipper'            });
 SE_Job.belongsTo(Clients,   {as:'consignee'          });
 

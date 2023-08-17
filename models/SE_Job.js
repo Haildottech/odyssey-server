@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
         bkg: { type:DataTypes.STRING },
         pcs: { type:DataTypes.STRING },
         vol: { type:DataTypes.STRING },
+        volWeight: { type:DataTypes.STRING },
         pol: { type:DataTypes.STRING },
         pod: { type:DataTypes.STRING },
         fd: { type:DataTypes.STRING },
@@ -59,7 +60,15 @@ module.exports = (sequelize, DataTypes) => {
             type:DataTypes.STRING,
             defaultValue: "0"
         },
-        operation:{ type:DataTypes.STRING }
+        flightNo:{ type:DataTypes.STRING },
+        cwtLine:{ type:DataTypes.STRING },
+        cwtClient:{ type:DataTypes.STRING },
+        operation:{ type:DataTypes.STRING },
+
+        arrivalDate  :{ type:DataTypes.STRING },
+        arrivalTime  :{ type:DataTypes.STRING },
+        departureDate:{ type:DataTypes.STRING },
+        departureTime:{ type:DataTypes.STRING },
     })
     return SE_Job;
 }

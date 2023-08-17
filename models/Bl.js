@@ -39,6 +39,25 @@ module.exports = (sequelize, DataTypes) => {
         noBls:{ type:DataTypes.STRING },
         formE:{ type:DataTypes.STRING },
         formEDate:{ type:DataTypes.STRING },
+
+        date1:          { type:DataTypes.STRING },
+        date2:          { type:DataTypes.STRING },
+        declareCarriage:{ type:DataTypes.STRING },
+        declareCustoms: { type:DataTypes.STRING },
+        insurance:      { type:DataTypes.STRING },
+        handlingInfo:   { type:DataTypes.TEXT('long') },
+        toOne:          { type:DataTypes.STRING },
+        toTwo:          { type:DataTypes.STRING },
+        toThree:        { type:DataTypes.STRING },
+        byOne:          { type:DataTypes.STRING },
+        byTwo:          { type:DataTypes.STRING },
+        byFirstCarrier: { type:DataTypes.STRING },
+        currency:       { type:DataTypes.STRING },
+        charges:        { type:DataTypes.STRING },
+        wtValPPC:       { type:DataTypes.STRING },
+        wtValCOLL:      { type:DataTypes.STRING },
+        othersPPC:      { type:DataTypes.STRING },
+        othersCOLL:     { type:DataTypes.STRING }
     })
     return Bl;
 }

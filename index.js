@@ -67,4 +67,4 @@ app.use("/nonGlParties", nonGlParties);
 // abdullah added a new feature
 const PORT = process.env.PORT || 8081; 
 
-app.listen(PORT, () => { console.log(`App listenings on port ${PORT}`) })  
+app.listen(PORT, () => { console.log(`App listenings on port ${PORT}`) });
