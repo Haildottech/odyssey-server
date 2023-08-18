@@ -1,4 +1,4 @@
-const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Program, Delivery_Order } = require("../../functions/Associations/jobAssociations/seaExport");
+const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Program, Delivery_Order, Item_Details } = require("../../functions/Associations/jobAssociations/seaExport");
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
@@ -181,6 +181,7 @@ routes.post("/addNote", async(req, res) => {
 });
 
 routes.post("/create", async(req, res) => {
+
     const createEquip = (list, id) => {
         let result = [];
         list.forEach((x)=>{
@@ -191,6 +192,7 @@ routes.post("/create", async(req, res) => {
         })
         return result;
     }
+
     try {
         let data = req.body.data
         delete data.id
@@ -337,7 +339,8 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
             'pod', 'fd', 'jobDate',
             'shipDate', 'cutOffDate',
             'delivery', 'freightType',
-            'operation', 'flightNo','VoyageId'
+            'operation', 'flightNo','VoyageId',
+            'cwtLine', 'cwtClient'
         ],
         order:[["createdAt", "DESC"]],
         include:[
@@ -364,7 +367,6 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
     }
 });
 
-
 routes.post("/createBl", async(req, res) => {
     try {
         let data = req.body;
@@ -374,6 +376,15 @@ routes.post("/createBl", async(req, res) => {
             no:check==null?1:parseInt(check.no)+1, 
             hbl:data.operation=="SE"?`SNSL${check==null?1:parseInt(check.no)+1}`:data.hbl
         }).catch((x)=>console.log(x))
+        // Creating Items for AE
+        if(data.Item_Details.length>0){
+          let tempItems = [];
+          data.Item_Details.forEach((x)=>{
+            x.id==null?delete x.id:null;
+            tempItems.push({...x, BlId:result.id})
+          })
+          await Item_Details.bulkCreate(tempItems)
+        }
         await data.Container_Infos.forEach((x, i)=>{
             data.Container_Infos[i] = {...x, BlId:result.id}
         })
@@ -388,7 +399,7 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
     try {
         let data = req.body;
-        //delete data.id;
+        
         await Bl.update(data, {where:{id:data.id}});
         data.Container_Infos.forEach((x, i)=>{
             data.Container_Infos[i] = {
@@ -402,12 +413,26 @@ routes.post("/editBl", async(req, res) => {
         })
         const result = await Container_Info.bulkCreate(data.Container_Infos,{
             updateOnDuplicate: [
-                "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
+              "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
             ],
         });
+        // Creating Items for AE
+        if(data.Item_Details.length>0){
+          let tempItems = [];
+          data.Item_Details.forEach((x)=>{
+            x.id==null?delete x.id:null;
+            tempItems.push({...x, BlId:req.body.id})
+          })
+          await Item_Details.bulkCreate(tempItems,{
+            updateOnDuplicate: [
+              "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
+            ],
+          })
+        }
 
         Stamps.destroy({ where:{id:data.deleteArr} })
         Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
+        Item_Details.destroy({ where:{id:req.body.deletingItemList} })
         await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
         res.json({status:'success', result: result});   
     } 
@@ -480,7 +505,8 @@ routes.get("/getBlById", async(req, res) => {
                     attributes:["jobNo"]
                 },
                 {model: Stamps},
-                { model:Container_Info }
+                {model: Container_Info},
+                {model: Item_Details}
             ]
         });
         res.json({status:'success', result:result});
@@ -570,10 +596,8 @@ routes.get("/getJobByValues", async (req, res) => {
     try {
       const jobs = await SE_Job.findAll({
         where: obj,
-        include:[{
-          model:Bl,
-          where: newObj, 
-          include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
+        include:[
+          { model:Bl, where: newObj, include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
           { model: Clients, attributes:   ["name"] },
           { model: Vendors, attributes:   ["name"], as : "local_vendor"},
           { model: Vendors, attributes:   ["name"], as : "shipping_line"},

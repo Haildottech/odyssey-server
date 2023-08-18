@@ -57,7 +57,20 @@ module.exports = (sequelize, DataTypes) => {
         wtValPPC:       { type:DataTypes.STRING },
         wtValCOLL:      { type:DataTypes.STRING },
         othersPPC:      { type:DataTypes.STRING },
-        othersCOLL:     { type:DataTypes.STRING }
+        othersCOLL:     { type:DataTypes.STRING },
+
+        ppWeightCharges:        { type:DataTypes.STRING },
+        ccWeightCharges:        { type:DataTypes.STRING },
+        ppvaluationCharges:     { type:DataTypes.STRING },
+        ccvaluationCharges:     { type:DataTypes.STRING },
+        ppTax:                  { type:DataTypes.STRING },
+        ccTax:                  { type:DataTypes.STRING },
+        ppOtherDueChargeAgent:  { type:DataTypes.STRING },
+        ccOtherDueChargeAgent:  { type:DataTypes.STRING },
+        ppOtherDueChargeCarrier:{ type:DataTypes.STRING },
+        ccOtherDueChargeCarrier:{ type:DataTypes.STRING },
+        ppTotal:                { type:DataTypes.STRING },
+        ccTotal:                { type:DataTypes.STRING }
     })
     return Bl;
 }

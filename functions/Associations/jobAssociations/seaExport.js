@@ -1,4 +1,8 @@
-const { SE_Job, SE_Equipments, Commodity, Bl, Container_Info, Vessel, Job_notes, Stamps, Loading_Program, Delivery_Order } = require("../../../models");
+const { 
+    SE_Job, SE_Equipments, Commodity, Bl,
+    Container_Info, Vessel, Job_notes, Stamps,
+    Loading_Program, Delivery_Order, Item_Details
+} = require("../../../models");
 const { Employees } = require("../employeeAssociations");
 const { Vendors } = require("../vendorAssociations");
 const { Clients } = require("../clientAssociation");
@@ -31,6 +35,14 @@ Bl.hasMany(Container_Info, {
 });
 Container_Info.belongsTo(Bl);
 
+Bl.hasMany(Item_Details, {
+    foriegnKey:{
+        type: DataTypes.UUID,
+        allowNull:false
+    }
+});
+Item_Details.belongsTo(Bl);
+
 SE_Job.hasOne(Bl, {
     foriegnKey:{
         type: DataTypes.UUID,
@@ -56,9 +68,7 @@ Voyage.hasOne(SE_Job, {
 SE_Job.belongsTo(Voyage);
 
 
-// zahida's code 
-
-
+// -------------------- zahida's code --------------------
 Bl.hasMany(Stamps, {
     foriegnKey :{
         type: DataTypes.UUID,
@@ -83,7 +93,6 @@ SE_Job.hasOne(Delivery_Order, {
 })
 Delivery_Order.belongsTo(SE_Job)
 
-// Job_notes.belongsTo(SE_Job, {as:"record"          });
 Bl.belongsTo(Clients,       {as:'notifyPartyOne'     });
 Bl.belongsTo(Clients,       {as:'notifyPartyTwo'     });
 SE_Job.belongsTo(Vessel,    {as:'vessel'             });
@@ -100,4 +109,7 @@ SE_Job.belongsTo(Vendors,   {as:'air_line'           });
 SE_Job.belongsTo(Clients,   {as:'shipper'            });
 SE_Job.belongsTo(Clients,   {as:'consignee'          });
 
-module.exports = { SE_Equipments, SE_Job, Bl, Container_Info, Stamps, Loading_Program, Job_notes, Delivery_Order }
+module.exports = { 
+    SE_Equipments, SE_Job, Bl, Container_Info, Stamps,
+    Loading_Program, Job_notes, Delivery_Order, Item_Details 
+}
