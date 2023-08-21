@@ -87,13 +87,13 @@ routes.get("/getValues", async(req, res) => {
             where: {
                 types: {
                 [Op.or]:[
-                    { [Op.substring]: 'Transporter' },
-                    { [Op.substring]: 'Forwarder/Coloader' },
-                    { [Op.substring]: 'Local Vendor' },
-                    { [Op.substring]: 'CHA/CHB' },
-                    { [Op.substring]: 'Overseas Agent' },
-                    { [Op.substring]: 'Air Line' },
-                    { [Op.substring]: 'Shipping Line' }
+                  { [Op.substring]: 'Transporter' },
+                  { [Op.substring]: 'Forwarder/Coloader' },
+                  { [Op.substring]: 'Local Vendor' },
+                  { [Op.substring]: 'CHA/CHB' },
+                  { [Op.substring]: 'Overseas Agent' },
+                  { [Op.substring]: 'Air Line' },
+                  { [Op.substring]: 'Shipping Line' }
                 ]
             }},
             attributes:['id','name', 'types', 'code'],
@@ -344,20 +344,20 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
         ],
         order:[["createdAt", "DESC"]],
         include:[
-            {
-                model:Bl,
-                required: false,
-            },
-            { model:SE_Equipments, attributes:['qty', 'size'] },
-            { model:Clients,  attributes:attr },
-            { model:Clients, as:'consignee', attributes:attr },
-            { model:Clients, as:'shipper', attributes:attr },
-            { model:Vendors, as:'overseas_agent', attributes:attr },
-            { model:Commodity, as:'commodity' },
-            { model:Vessel, as:'vessel', attributes:['name'] },
-            { model:Vendors, as:'air_line', attributes:['name'] },
-            { model:Vendors, as:'shipping_line', attributes:['name'] },
-            { model:Voyage, attributes:['voyage'] },
+          {
+              model:Bl,
+              required: false,
+          },
+          { model:SE_Equipments, attributes:['qty', 'size'] },
+          { model:Clients,  attributes:attr },
+          { model:Clients, as:'consignee', attributes:attr },
+          { model:Clients, as:'shipper', attributes:attr },
+          { model:Vendors, as:'overseas_agent', attributes:attr },
+          { model:Commodity, as:'commodity' },
+          { model:Vessel, as:'vessel', attributes:['name'] },
+          { model:Vendors, as:'air_line', attributes:['name'] },
+          { model:Vendors, as:'shipping_line', attributes:['name'] },
+          { model:Voyage, attributes:['voyage'] },
         ],
     });
     res.json({status:'success', result:result});
@@ -399,7 +399,6 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
     try {
         let data = req.body;
-        
         await Bl.update(data, {where:{id:data.id}});
         data.Container_Infos.forEach((x, i)=>{
             data.Container_Infos[i] = {
