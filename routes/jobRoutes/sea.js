@@ -2,7 +2,7 @@ const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Pr
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
-const { Clients }=require("../../functions/Associations/clientAssociation")
+const { Clients } = require("../../functions/Associations/clientAssociation")
 const { Commodity, Vessel, Charges }=require("../../models");
 const routes = require('express').Router();
 const Sequelize = require('sequelize');
@@ -402,48 +402,48 @@ routes.post("/createBl", async(req, res) => {
 });
 
 routes.post("/editBl", async(req, res) => {
-    try {
-      let data = req.body;
-      await Bl.update(data, {where:{id:data.id}});
-      data.Container_Infos.forEach((x, i)=>{
-          data.Container_Infos[i] = {
-              ...x, BlId:data.id, 
-              pkgs:x.pkgs.toString(),
-              gross:x.gross.toString(),
-              net:x.net.toString(),
-              tare:x.tare.toString(),
-              cbm:x.cbm?.toString(),
-          }
+  try {
+    let data = req.body;
+    await Bl.update(data, {where:{id:data.id}});
+    data.Container_Infos.forEach((x, i)=>{
+        data.Container_Infos[i] = {
+            ...x, BlId:data.id, 
+            pkgs:x.pkgs.toString(),
+            gross:x.gross.toString(),
+            net:x.net.toString(),
+            tare:x.tare.toString(),
+            cbm:x.cbm?.toString(),
+        }
+    })
+    const result = await Container_Info.bulkCreate(data.Container_Infos,{
+        updateOnDuplicate: [
+          "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
+        ],
+    });
+    // Creating Items for AE
+    if(data.Item_Details.length>0){
+      let tempItems = [];
+      data.Item_Details.forEach((x)=>{
+        x.id==null?delete x.id:null;
+        tempItems.push({...x, BlId:req.body.id})
       })
-      const result = await Container_Info.bulkCreate(data.Container_Infos,{
-          updateOnDuplicate: [
-            "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
-          ],
-      });
-      // Creating Items for AE
-      if(data.Item_Details.length>0){
-        let tempItems = [];
-        data.Item_Details.forEach((x)=>{
-          x.id==null?delete x.id:null;
-          tempItems.push({...x, BlId:req.body.id})
-        })
-        await Item_Details.bulkCreate(tempItems,{
-          updateOnDuplicate: [
-            "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
-          ],
-        })
-      }
+      await Item_Details.bulkCreate(tempItems,{
+        updateOnDuplicate: [
+          "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
+        ],
+      })
+    }
 
-      await Stamps.destroy({ where:{id:data.deleteArr} })
-      await Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
-      await Item_Details.destroy({ where:{id:req.body.deletingItemList} })
-      await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
-      res.json({status:'success', result: result});   
-    } 
-    catch (error) {
-        console.log(error)
-      res.json({status:'error', result:error});  
-    } 
+    await Stamps.destroy({ where:{id:data.deleteArr} })
+    await Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
+    await Item_Details.destroy({ where:{id:req.body.deletingItemList} })
+    await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
+    res.json({status:'success', result: result});   
+  } 
+  catch (error) {
+      console.log(error)
+    res.json({status:'error', result:error});  
+  } 
 }); 
 
 routes.post("/findJobByNo", async(req, res) => {
@@ -557,16 +557,15 @@ routes.post("/upsertLoadingProgram", async(req, res) => {
 }); 
 
 routes.get("/getJobByValues", async (req, res) => {
+
     let value = req.headers;
-  
     let obj = {
       createdAt: {
-          [Op.gte]: moment(value.from).toDate(),
-          [Op.lte]: moment(value.to).add(1, 'days').toDate(),
-        }
+        [Op.gte]: moment(value.from).toDate(),
+        [Op.lte]: moment(value.to).add(1, 'days').toDate(),
+      }
     };
-    let newObj = {}
-  
+    let newObj = {};
     if (value.client) {
       obj.ClientId = value.client;
     }
