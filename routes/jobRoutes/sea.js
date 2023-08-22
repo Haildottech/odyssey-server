@@ -22,122 +22,129 @@ const getJob = (id) => {
 }
 
 routes.get("/getValues", async(req, res) => {
-    let makeResult = (result, resultTwo) => {
-        let finalResult = {shipper:[], consignee:[], notify:[], client:[]};
-        result.forEach((x) => {
-            if(x.types.includes('Shipper')){
-                finalResult.shipper.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-            }
-            if(x.types.includes('Consignee')){
-                finalResult.consignee.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-            }
-            if(x.types.includes('Notify')){
-                finalResult.notify.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-            }
-        })
-        finalResult.client = resultTwo.map((x)=>{
-            return {name:`${x.name} (${x.code})`, id:x.id, types:x.types}
-        });
-        return finalResult
-    }
-    let makeResultTwo = (result) => {
-    let finalResult = { transporter:[], forwarder:[], overseasAgent:[], localVendor:[], chaChb:[], sLine:[], airLine:[] };
+  let makeResult = (result, resultTwo) => {
+    let finalResult = {shipper:[], consignee:[], notify:[], client:[]};
     result.forEach((x) => {
-        if(x.types.includes('Air Line')){
-          finalResult.airLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+        if(x.types.includes('Shipper')){
+            finalResult.shipper.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
-        if(x.types.includes('Transporter')){
-          finalResult.transporter.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+        if(x.types.includes('Consignee')){
+            finalResult.consignee.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
-        if(x.types.includes('Forwarder/Coloader')){
-          finalResult.forwarder.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-        }
-        if(x.types.includes('Overseas Agent')){
-          finalResult.overseasAgent.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-        }
-        if(x.types.includes('CHA/CHB')){
-          finalResult.chaChb.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-        }
-        if(x.types.includes('Local Vendor')){
-          finalResult.localVendor.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
-        }
-        if(x.types.includes('Shipping Line')){
-          finalResult.sLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+        if(x.types.includes('Notify')){
+            finalResult.notify.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
         }
     })
+    let tempClient = [];
+    resultTwo.forEach((x)=>{
+      if(x.nongl!='1'){
+        tempClient.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+    })
+    finalResult.client = tempClient;
+    // finalResult.client = resultTwo.map((x)=>{
+    //     return {name:`${x.name} (${x.code})`, id:x.id, types:x.types}
+    // });
     return finalResult
-    }
-    try {
-        const resultOne = await Clients.findAll({ 
-            attributes:['id','name', 'types', 'code'],
-            order: [['createdAt', 'DESC']]
-        })
-        const result = await Clients.findAll({ 
-            where: {
-                types: {
-                [Op.or]:[
-                    { [Op.substring]: 'Shipper' },
-                    { [Op.substring]: 'Consignee' },
-                    { [Op.substring]: 'Notify' }]
-            }},
-            attributes:['id','name', 'types', 'code'],
-            order: [['createdAt', 'DESC']]
-        })
-        const resultThree = await Vendors.findAll({ 
-            where: {
-                types: {
-                [Op.or]:[
-                  { [Op.substring]: 'Transporter' },
-                  { [Op.substring]: 'Forwarder/Coloader' },
-                  { [Op.substring]: 'Local Vendor' },
-                  { [Op.substring]: 'CHA/CHB' },
-                  { [Op.substring]: 'Overseas Agent' },
-                  { [Op.substring]: 'Air Line' },
-                  { [Op.substring]: 'Shipping Line' }
-                ]
-            }},
-            attributes:['id','name', 'types', 'code'],
-            order: [['createdAt', 'DESC']]
-        })
-        const resultTwo = await Commodity.findAll({
-            order: [['createdAt', 'DESC']],
-            attributes:['id','name', 'hs'],
-        });
+  }
+  let makeResultTwo = (result) => {
+    let finalResult = { transporter:[], forwarder:[], overseasAgent:[], localVendor:[], chaChb:[], sLine:[], airLine:[] };
+    result.forEach((x) => {
+      if(x.types.includes('Air Line')){
+        finalResult.airLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('Transporter')){
+        finalResult.transporter.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('Forwarder/Coloader')){
+        finalResult.forwarder.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('Overseas Agent')){
+        finalResult.overseasAgent.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('CHA/CHB')){
+        finalResult.chaChb.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('Local Vendor')){
+        finalResult.localVendor.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+      if(x.types.includes('Shipping Line')){
+        finalResult.sLine.push({name:`${x.name} (${x.code})`, id:x.id, types:x.types})
+      }
+    })
+    return finalResult
+  }
 
-        const resultFour = await Vessel.findAll({
-            order: [['createdAt', 'DESC']],
-            attributes:['id', 'name', 'code', 'carrier'],
-            include:[{
-                model:Voyage
-            }]
-        });
-        const Sr = await Employees.findAll({where:{represent: {[Op.substring]: 'sr'} }, attributes:['id', 'name']});
-        const charges = await Charges.findAll();
-        res.json({
-            status:'success',
-            result:{
-                party:makeResult(result, resultOne),
-                vendor:makeResultTwo(resultThree),
-                commodity:resultTwo,
-                vessel:resultFour,
-                sr:Sr,
-                chargeList:charges
-            }
-        });
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    const resultOne = await Clients.findAll({ 
+      attributes:['id','name', 'types', 'code', 'nongl'],
+      order: [['createdAt', 'DESC']]
+    })
+    const result = await Clients.findAll({ 
+      where: {
+        types: {
+          [Op.or]:[
+            { [Op.substring]: 'Shipper' },
+            { [Op.substring]: 'Consignee' },
+            { [Op.substring]: 'Notify' }]
+      }},
+      attributes:['id','name', 'types', 'code'],
+      order: [['createdAt', 'DESC']]
+    })
+    const resultThree = await Vendors.findAll({ 
+      where: {
+        types: {
+          [Op.or]:[
+            { [Op.substring]: 'Transporter' },
+            { [Op.substring]: 'Forwarder/Coloader' },
+            { [Op.substring]: 'Local Vendor' },
+            { [Op.substring]: 'CHA/CHB' },
+            { [Op.substring]: 'Overseas Agent' },
+            { [Op.substring]: 'Air Line' },
+            { [Op.substring]: 'Shipping Line' }
+          ]
+      }},
+      attributes:['id','name', 'types', 'code'],
+      order: [['createdAt', 'DESC']]
+    })
+    const resultTwo = await Commodity.findAll({
+      order: [['createdAt', 'DESC']],
+      attributes:['id','name', 'hs']
+    });
+
+    const resultFour = await Vessel.findAll({
+      order: [['createdAt', 'DESC']],
+      attributes:['id', 'name', 'code', 'carrier'],
+      include:[{
+          model:Voyage
+      }]
+    });
+    const Sr = await Employees.findAll({where:{represent: {[Op.substring]: 'sr'} }, attributes:['id', 'name']});
+    const charges = await Charges.findAll({});
+    res.json({
+      status:'success',
+      result:{
+        party:makeResult(result, resultOne),
+        vendor:makeResultTwo(resultThree),
+        commodity:resultTwo,
+        vessel:resultFour,
+        sr:Sr,
+        chargeList:charges
+      }
+    });
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.post("/getNotes", async(req, res) => {
     try {
-        console.log(req.body)
-        const result = await Job_notes.findAll({
-            where:{type:"SE", recordId:req.body.id},
-            order:[["createdAt", "DESC"]],
-        });
-        res.json({status:'success', result:result});
+      const result = await Job_notes.findAll({
+        where:{type:"SE", recordId:req.body.id},
+        order:[["createdAt", "DESC"]],
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -146,12 +153,11 @@ routes.post("/getNotes", async(req, res) => {
 
 routes.get("/getAllNotes", async(req, res) => {
     try {
-        console.log(req.body)
-        const result = await Job_notes.findAll({
-            // where:{type:"SE", recordId:req.body.id},
-            order:[["createdAt", "DESC"]],
-        });
-        res.json({status:'success', result:result});
+      const result = await Job_notes.findAll({
+        // where:{type:"SE", recordId:req.body.id},
+        order:[["createdAt", "DESC"]],
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -159,14 +165,13 @@ routes.get("/getAllNotes", async(req, res) => {
 });
 
 routes.post('/updateNotes', async(req, res) => {
-    try {
-     const result =  await Job_notes.update({opened : req.body.data.opened}, {where : {recordId : req.body.data.recordId}})
-     res.json({ status: "success", result:result})
-    }
-    catch (err) {
-     res.json({ status: "error", result:err.message})
- 
-    }
+  try {
+    const result =  await Job_notes.update({opened : req.body.data.opened}, {where : {recordId : req.body.data.recordId}})
+    res.json({ status: "success", result:result})
+  }
+  catch (err) {
+    res.json({ status: "error", result:err.message})
+  }
 });
 
 routes.post("/addNote", async(req, res) => {
@@ -398,42 +403,42 @@ routes.post("/createBl", async(req, res) => {
 
 routes.post("/editBl", async(req, res) => {
     try {
-        let data = req.body;
-        await Bl.update(data, {where:{id:data.id}});
-        data.Container_Infos.forEach((x, i)=>{
-            data.Container_Infos[i] = {
-                ...x, BlId:data.id, 
-                pkgs:x.pkgs.toString(),
-                gross:x.gross.toString(),
-                net:x.net.toString(),
-                tare:x.tare.toString(),
-                cbm:x.cbm?.toString(),
-            }
+      let data = req.body;
+      await Bl.update(data, {where:{id:data.id}});
+      data.Container_Infos.forEach((x, i)=>{
+          data.Container_Infos[i] = {
+              ...x, BlId:data.id, 
+              pkgs:x.pkgs.toString(),
+              gross:x.gross.toString(),
+              net:x.net.toString(),
+              tare:x.tare.toString(),
+              cbm:x.cbm?.toString(),
+          }
+      })
+      const result = await Container_Info.bulkCreate(data.Container_Infos,{
+          updateOnDuplicate: [
+            "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
+          ],
+      });
+      // Creating Items for AE
+      if(data.Item_Details.length>0){
+        let tempItems = [];
+        data.Item_Details.forEach((x)=>{
+          x.id==null?delete x.id:null;
+          tempItems.push({...x, BlId:req.body.id})
         })
-        const result = await Container_Info.bulkCreate(data.Container_Infos,{
-            updateOnDuplicate: [
-              "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
-            ],
-        });
-        // Creating Items for AE
-        if(data.Item_Details.length>0){
-          let tempItems = [];
-          data.Item_Details.forEach((x)=>{
-            x.id==null?delete x.id:null;
-            tempItems.push({...x, BlId:req.body.id})
-          })
-          await Item_Details.bulkCreate(tempItems,{
-            updateOnDuplicate: [
-              "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
-            ],
-          })
-        }
+        await Item_Details.bulkCreate(tempItems,{
+          updateOnDuplicate: [
+            "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
+          ],
+        })
+      }
 
-        Stamps.destroy({ where:{id:data.deleteArr} })
-        Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
-        Item_Details.destroy({ where:{id:req.body.deletingItemList} })
-        await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
-        res.json({status:'success', result: result});   
+      await Stamps.destroy({ where:{id:data.deleteArr} })
+      await Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
+      await Item_Details.destroy({ where:{id:req.body.deletingItemList} })
+      await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
+      res.json({status:'success', result: result});   
     } 
     catch (error) {
         console.log(error)

@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
         micrCode: { type:DataTypes.STRING },
         currency: { type:DataTypes.STRING },
         createdBy:{ type:DataTypes.STRING },
+        nongl:{ type:DataTypes.STRING },
     })
     return Clients;
 }
