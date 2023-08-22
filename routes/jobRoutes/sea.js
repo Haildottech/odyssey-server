@@ -591,6 +591,9 @@ routes.get("/getJobByValues", async (req, res) => {
     if (value.vendor) {
       obj.localVendorId = value.vendor;
     }
+     if(value.air_line) {
+      obj.airLineId = value.air_line;
+    }
     if(value.hbl) {
       newObj.hbl = value.hbl;
     }
@@ -605,6 +608,7 @@ routes.get("/getJobByValues", async (req, res) => {
           { model: Clients, attributes:   ["name"] },
           { model: Vendors, attributes:   ["name"], as : "local_vendor"},
           { model: Vendors, attributes:   ["name"], as : "shipping_line"},
+          { model: Vendors, attributes:   ["name"], as :"air_line"},
           { model: Vessel , attributes:   ["name"], as :"vessel" },
           { model: Commodity, attributes: ["name"], as :"commodity" },
           { model: Employees, attributes: ["name"], as :"sales_representator" },
@@ -641,6 +645,7 @@ routes.get("/getValuesJobList", async (req, res) => {
         overseasAgent: [],
         chaChb: [],
         sLine: [],
+        airLine: []
       };
       result.forEach((x) => {
         if (x.types.includes("Overseas Agent")) {
@@ -665,6 +670,13 @@ routes.get("/getValuesJobList", async (req, res) => {
             types: x.types,
           });
         }
+        if (x.types.includes("Air Line")) {
+          finalResult.airLine.push({
+            name: `${x.name} (${x.code})`,
+            id: x.id,
+            types: x.types,
+          });
+        } 
       });
       return finalResult;
     };
@@ -724,7 +736,7 @@ routes.get("/getValuesJobList", async (req, res) => {
         result: {
           vendor: vendor,
           party: makeResult(result, resultOne),
-          vedor_details: makeResultTwo(resultThree),
+          vendor_details: makeResultTwo(resultThree),
           commodity: resultTwo,
           vessel: resultFour,
           sr: Sr,
