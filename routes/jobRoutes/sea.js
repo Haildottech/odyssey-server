@@ -1,5 +1,7 @@
 const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Program, Delivery_Order, Item_Details } = require("../../functions/Associations/jobAssociations/seaExport");
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
+const { Charge_Head } = require("../../functions/Associations/incoiceAssociations");
+
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
 const { Clients } = require("../../functions/Associations/clientAssociation")
@@ -141,7 +143,7 @@ routes.get("/getValues", async(req, res) => {
 routes.post("/getNotes", async(req, res) => {
     try {
       const result = await Job_notes.findAll({
-        where:{type:"SE", recordId:req.body.id},
+        where:{type: req.body.type, recordId:req.body.id},
         order:[["createdAt", "DESC"]],
       });
       res.json({status:'success', result:result});
@@ -166,7 +168,8 @@ routes.get("/getAllNotes", async(req, res) => {
 
 routes.post('/updateNotes', async(req, res) => {
   try {
-    const result =  await Job_notes.update({opened : req.body.data.opened}, {where : {recordId : req.body.data.recordId}})
+    const result =  await Job_notes.update({opened : req.body.data.opened}, 
+    {where : {recordId : req.body.data.recordId}})
     res.json({ status: "success", result:result})
   }
   catch (err) {
@@ -603,16 +606,20 @@ routes.get("/getJobByValues", async (req, res) => {
       const jobs = await SE_Job.findAll({
         where: obj,
         include:[
-          { model:Bl, where: newObj, include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
-          { model: Clients, attributes:   ["name"] },
-          { model: Vendors, attributes:   ["name"], as : "local_vendor"},
-          { model: Vendors, attributes:   ["name"], as : "shipping_line"},
-          { model: Vendors, attributes:   ["name"], as :"air_line"},
-          { model: Vessel , attributes:   ["name"], as :"vessel" },
-          { model: Commodity, attributes: ["name"], as :"commodity" },
-          { model: Employees, attributes: ["name"], as :"sales_representator" },
-          { model: Clients, attributes:   ["name"], as :"shipper" },
-          { model: Clients, attributes:   ["name"], as :"consignee" },
+          { model:Bl, where: newObj, 
+          include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]},
+          {model:Item_Details , attributes:["grossWt", 'chargableWt', "rate_charge"]} 
+          ]},
+          { model: Clients, attributes:     ["name"] },
+          { model: Charge_Head, attributes: ["type", "amount"]},
+          { model: Vendors, attributes:     ["name"], as : "local_vendor"},
+          { model: Vendors, attributes:     ["name"], as : "shipping_line"},
+          { model: Vendors, attributes:     ["name"], as :"air_line"},
+          { model: Vessel , attributes:     ["name"], as :"vessel" },
+          { model: Commodity, attributes:   ["name"], as :"commodity" },
+          { model: Employees, attributes:   ["name"], as :"sales_representator" },
+          { model: Clients, attributes:     ["name"], as :"shipper" },
+          { model: Clients, attributes:     ["name"], as :"consignee" },
       ]});
       res.status(200).json({ result: jobs });
     } catch (err) {
