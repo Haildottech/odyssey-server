@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
         size_type:{ type:DataTypes.STRING },
         dg_type:{ type:DataTypes.STRING },
         qty:{ type:DataTypes.STRING },
+        rate_charge:{ type:DataTypes.STRING },
         currency:{ type:DataTypes.STRING },
         amount:{ type:DataTypes.STRING },
         discount:{ type:DataTypes.STRING },

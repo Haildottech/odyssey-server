@@ -12,16 +12,17 @@ const Op = Sequelize.Op;
 
 const getJob = (id) => {
     const finalResult = SE_Job.findOne({
-        where:{id:id},
-        include:[
-            { model:SE_Equipments },
-            { model:Clients, attributes:['name'] }
-        ]
+      where:{id:id},
+      include:[
+        { model:SE_Equipments },
+        { model:Clients, attributes:['name'] }
+      ]
     })
     return finalResult 
 }
 
 routes.get("/getValues", async(req, res) => {
+
   let makeResult = (result, resultTwo) => {
     let finalResult = {shipper:[], consignee:[], notify:[], client:[]};
     result.forEach((x) => {
@@ -46,7 +47,8 @@ routes.get("/getValues", async(req, res) => {
     //     return {name:`${x.name} (${x.code})`, id:x.id, types:x.types}
     // });
     return finalResult
-  }
+  };
+
   let makeResultTwo = (result) => {
     let finalResult = { transporter:[], forwarder:[], overseasAgent:[], localVendor:[], chaChb:[], sLine:[], airLine:[] };
     result.forEach((x) => {
@@ -73,7 +75,7 @@ routes.get("/getValues", async(req, res) => {
       }
     })
     return finalResult
-  }
+  };
 
   try {
     const resultOne = await Clients.findAll({ 
@@ -107,11 +109,14 @@ routes.get("/getValues", async(req, res) => {
       attributes:['id','name', 'types', 'code'],
       order: [['createdAt', 'DESC']]
     })
+    let tempCommodity = [];
     const resultTwo = await Commodity.findAll({
       order: [['createdAt', 'DESC']],
       attributes:['id','name', 'hs']
     });
-
+    await resultTwo.forEach((x)=>{
+      tempCommodity.push({...x.dataValues, name:`${x.dataValues.name} (${x.dataValues.hs})`})
+    })
     const resultFour = await Vessel.findAll({
       order: [['createdAt', 'DESC']],
       attributes:['id', 'name', 'code', 'carrier'],
@@ -120,16 +125,20 @@ routes.get("/getValues", async(req, res) => {
       }]
     });
     const Sr = await Employees.findAll({where:{represent: {[Op.substring]: 'sr'} }, attributes:['id', 'name']});
+    let tempChargeList = [];
     const charges = await Charges.findAll({});
+    await charges.forEach((x) => {
+      tempChargeList.push({...x.dataValues, label:`(${x.dataValues.code}) ${x.dataValues.short}`, value:x.dataValues.code});
+    });
     res.json({
       status:'success',
       result:{
         party:makeResult(result, resultOne),
         vendor:makeResultTwo(resultThree),
-        commodity:resultTwo,
+        commodity:tempCommodity,
         vessel:resultFour,
         sr:Sr,
-        chargeList:charges
+        chargeList:tempChargeList
       }
     });
   }
@@ -208,11 +217,14 @@ routes.post("/create", async(req, res) => {
         } else {
           data.airLineId=null
         }
-        const check = await SE_Job.findOne({order: [ [ 'jobId', 'DESC' ]], attributes:["jobId"], where:{operation:data.operation}});
+        const check = await SE_Job.findOne({
+          order:[['jobId','DESC']], attributes:["jobId"],
+          where:{operation:data.operation, companyId:data.companyId}
+        });
         const result = await SE_Job.create({
-            ...data,
-            jobId:check==null?1:parseInt(check.jobId)+1,
-            jobNo:`${data.companyId=="1"?"SNS":data.companyId=="2"?"CLS":"ACS"}-${data.operation}${data.operation=="SE"?"J":data.operation=="SI"?"J":""}-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
+          ...data,
+          jobId:check==null?1:parseInt(check.jobId)+1,
+          jobNo:`${data.companyId=="1"?"SNS":data.companyId=="2"?"CLS":"ACS"}-${data.operation}${data.operation=="SE"?"J":data.operation=="SI"?"J":""}-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
         }).catch((x)=>console.log(x.message))
         await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
         res.json({status:'success', result:await getJob(result.id)});
@@ -250,7 +262,6 @@ routes.post("/edit", async(req, res) => {
 });
 
 routes.get("/get", async(req, res) => {
-    console.log(req.headers)
     try {
         const result = await SE_Job.findAll({
             where:{
@@ -309,6 +320,7 @@ routes.get("/getSEJobIds", async(req, res) => {
 
 routes.get("/getSEJobById", async(req, res) => {
     try {
+      console.log(req.headers.operation)
         const result = await SE_Job.findOne({
             where:{id:req.headers.id},
             include:[
@@ -379,7 +391,7 @@ routes.post("/createBl", async(req, res) => {
         const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
         const result = await Bl.create({...data, 
             no:check==null?1:parseInt(check.no)+1, 
-            hbl:data.operation=="SE"?`SNSL${check==null?1:parseInt(check.no)+1}`:data.hbl
+            hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
         }).catch((x)=>console.log(x))
         // Creating Items for AE
         if(data.Item_Details.length>0){
@@ -404,6 +416,20 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
   try {
     let data = req.body;
+    console.log(data.gross,"Vol vol")
+    // console.log(data.cbm,"Vol vol")
+    // console.log(data.wtUnit,"Wt-Unit weightUnit")
+    // console.log(data.pkgs,"PCS pcs")
+    // console.log(data.unit,"PCs-Unit pkgUnit")
+    const editedJob = await SE_Job.update({
+      pkgUnit:data.unit, 
+      pcs:data.pkgs, 
+      weightUnit:data.wtUnit, 
+      vol:data.cbm, 
+      shpVol:data.cbm,
+      weight:data.gross,
+    }, {where:{id:data.SEJobId}});
+    console.log(editedJob)
     await Bl.update(data, {where:{id:data.id}});
     data.Container_Infos.forEach((x, i)=>{
         data.Container_Infos[i] = {

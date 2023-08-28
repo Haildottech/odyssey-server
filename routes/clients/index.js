@@ -11749,6 +11749,7 @@ routes.post("/editClient", async(req, res) => {
 routes.get("/getClients", async(req, res) => {
     try {
         const result = await Clients.findAll({
+            where:{[Op.and]:[{nongl:{[Op.eq]:null}}]},
             attributes:['id', 'name' , 'person1', 'mobile1', 'person2', 'mobile2', 'telephone1', 'telephone2', 'address1', 'address2', 'createdBy', 'code'],
             order: [['createdAt', 'DESC'], /* ['name', 'ASC'],*/] 
         });
@@ -11793,10 +11794,10 @@ routes.get("/getNotifyParties", async(req, res) => {
 
 routes.get("/getForCharges", async(req, res) => {
     try {
-        let obj = req.headers.id===undefined?{}:{id:req.headers.id};
+        let obj = req.headers.id===undefined?{[Op.and]:[{nongl:{[Op.eq]:null}}]}:{[Op.and]:[{ nongl:{[Op.eq]:null}, id:req.headers.id }]};
         const result = await Clients.findAll({
             where:obj,
-            attributes:["id", "name", "person2", "person1", "mobile1", "mobile2", "address1", "address2", "types", "city"],
+            attributes:["id", "name", "person2", "person1", "mobile1", "mobile2", "address1", "address2", "types", "city", "types", "nongl"],
             order: [['createdAt', 'DESC'], /* ['name', 'ASC'],*/] 
         });
         res.json({status:'success', result:result});
