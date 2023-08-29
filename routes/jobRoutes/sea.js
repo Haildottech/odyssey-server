@@ -1,4 +1,7 @@
-const { SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes, Loading_Program, Delivery_Order, Item_Details } = require("../../functions/Associations/jobAssociations/seaExport");
+const { 
+  SE_Job, SE_Equipments, Container_Info, Bl, Stamps, Job_notes,
+  Loading_Program, Delivery_Order, Item_Details, Dimensions
+} = require("../../functions/Associations/jobAssociations/seaExport");
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
@@ -115,7 +118,11 @@ routes.get("/getValues", async(req, res) => {
       attributes:['id','name', 'hs']
     });
     await resultTwo.forEach((x)=>{
-      tempCommodity.push({...x.dataValues, name:`${x.dataValues.name} (${x.dataValues.hs})`})
+      if(x.hs){
+        tempCommodity.push({...x.dataValues, name:`${x.dataValues.name} (${x.dataValues.hs})`})
+      } else {
+        tempCommodity.push(x.dataValues)
+      }
     })
     const resultFour = await Vessel.findAll({
       order: [['createdAt', 'DESC']],
@@ -403,9 +410,16 @@ routes.post("/createBl", async(req, res) => {
           await Item_Details.bulkCreate(tempItems)
         }
         await data.Container_Infos.forEach((x, i)=>{
-            data.Container_Infos[i] = {...x, BlId:result.id}
+          data.Container_Infos[i] = {...x, BlId:result.id}
         })
         await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
+        if(data.Dimensions.length>0){
+          data.Dimensions.forEach((x, i)=>{
+            x.id==null?delete x.id:null;
+            data.Dimensions[i] = {...x, BlId:result.id}
+          })
+          await Dimensions.bulkCreate(data.Dimensions).catch((x)=>console.log(x))
+        }
         res.json({status:'success', result:result.id  });
     }
     catch (error) {
@@ -416,11 +430,6 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
   try {
     let data = req.body;
-    console.log(data.gross,"Vol vol")
-    // console.log(data.cbm,"Vol vol")
-    // console.log(data.wtUnit,"Wt-Unit weightUnit")
-    // console.log(data.pkgs,"PCS pcs")
-    // console.log(data.unit,"PCs-Unit pkgUnit")
     const editedJob = await SE_Job.update({
       pkgUnit:data.unit, 
       pcs:data.pkgs, 
@@ -429,7 +438,6 @@ routes.post("/editBl", async(req, res) => {
       shpVol:data.cbm,
       weight:data.gross,
     }, {where:{id:data.SEJobId}});
-    console.log(editedJob)
     await Bl.update(data, {where:{id:data.id}});
     data.Container_Infos.forEach((x, i)=>{
         data.Container_Infos[i] = {
@@ -459,15 +467,26 @@ routes.post("/editBl", async(req, res) => {
         ],
       })
     }
-
+    if(data.Dimensions.length>0){
+      let tempItems = [];
+      data.Dimensions.forEach((x)=>{
+        x.id==null?delete x.id:null;
+        tempItems.push({...x, BlId:req.body.id})
+      })
+      await Dimensions.bulkCreate(tempItems,{
+        updateOnDuplicate: [
+          "length", "width", "height", "qty", "vol", "weight"
+        ],
+      })//.catch((x)=>console.log(x.message))
+    }
     await Stamps.destroy({ where:{id:data.deleteArr} })
     await Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
     await Item_Details.destroy({ where:{id:req.body.deletingItemList} })
+    await Dimensions.destroy({ where:{id:req.body.deletingDimensionsList} })
     await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
     res.json({status:'success', result: result});   
   } 
   catch (error) {
-      console.log(error)
     res.json({status:'error', result:error});  
   } 
 }); 
@@ -536,7 +555,8 @@ routes.get("/getBlById", async(req, res) => {
                 },
                 {model: Stamps},
                 {model: Container_Info},
-                {model: Item_Details}
+                {model: Item_Details},
+                {model: Dimensions},
             ]
         });
         res.json({status:'success', result:result});

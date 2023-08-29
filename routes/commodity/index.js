@@ -7,15 +7,8 @@ routes.post("/create", async(req, res) => {
     delete tempData.isHazmat;
     tempData.isHazmat = req.body.data.isHazmat.length>0?1:0;
     try {
-      const exists = await Commodity.findOne({
-        where:{hs:req.body.data.hs}
-      });
-      if(exists){
-          res.json({status:'exists'});
-      } else {
-          const result = await Commodity.create(tempData);
-          res.json({status:'success', result:result});
-      }
+      const result = await Commodity.create(tempData);
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -39,21 +32,11 @@ routes.post("/edit", async(req, res) => {
     delete tempData.isHazmat;
     tempData.isHazmat = req.body.data.isHazmat.length>0?1:0;
     try {
-      const exists = await Commodity.findOne({
-        where:{
-            id:{ [Op.ne]: tempData.id },
-            hs:{ [Op.eq]: tempData.hs}
-        }
+      await Commodity.update(tempData,{
+        where:{id:tempData.id}
       });
-      if(exists){
-          res.json({status:'exists', result:exists});
-      } else {
-          await Commodity.update(tempData,{
-            where:{id:tempData.id}
-          });
-          const result = await Commodity.findOne({where:{id:tempData.id}})
-          res.json({status:'success', result:result});
-      }
+      const result = await Commodity.findOne({where:{id:tempData.id}})
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});

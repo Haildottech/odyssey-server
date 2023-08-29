@@ -70,7 +70,8 @@ module.exports = (sequelize, DataTypes) => {
         ppOtherDueChargeCarrier:{ type:DataTypes.STRING },
         ccOtherDueChargeCarrier:{ type:DataTypes.STRING },
         ppTotal:                { type:DataTypes.STRING },
-        ccTotal:                { type:DataTypes.STRING }
+        ccTotal:                { type:DataTypes.STRING },
+        applyToCWT:             { type:DataTypes.STRING },
     })
     return Bl;
 }
