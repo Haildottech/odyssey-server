@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
     const Vouchers = sequelize.define("Vouchers", {
         voucher_No:{
-            type:DataTypes.STRING,
+            type:DataTypes.INTEGER,
             allowNull: false,
             validate:{
                 notEmpty: true

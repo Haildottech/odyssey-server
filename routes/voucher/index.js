@@ -129,9 +129,20 @@ routes.post("/voucherCreation", async (req, res) => {
 
 routes.post("/voucherEdit", async (req, res) => {
   try {
-    await Vouchers.update({ ...req.body }, { where: { id: req.body.id } }).catch((x)=>console.log(x))
-    req.body.Voucher_Heads.forEach((x) => {
-      return Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, defaultAmount : "-" }) 
+
+    await Vouchers.update({
+      vType: req.body.vType, 
+      CompanyId: req.body.CompanyId, 
+      chequeDate: req.body.chequeDate, 
+      chequeNo: req.body.chequeNo, 
+      payTo: req.body.payTo, 
+      type: req.body.type, 
+      ChildAccountId: req.body.ChildAccountId
+    }, { where: { id: req.body.id } })
+
+    req.body.Voucher_Heads.forEach(async(x) => {
+      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, defaultAmount : "-" })
+      .catch((x)=>console.log(x.message))
     })
     await res.json({ status: "success"});
   } catch (error) {
@@ -257,6 +268,16 @@ routes.get("/getVouchersByEmployeeId", async (req, res) => {
   } catch (error) {
     res.json({ status: "error", result: error });
   }
-});   
+});
+
+routes.post("/testDeleteVouchers", async (req, res) => {
+  try {
+
+    await Vouchers.destroy({where:{}})
+    await res.json({ status: "success"});
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});  
 
 module.exports = routes;

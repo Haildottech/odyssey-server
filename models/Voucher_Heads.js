@@ -18,11 +18,7 @@ module.exports = (sequelize, DataTypes) => {
             }
         },
         narration:{
-            type:DataTypes.STRING,
-            allowNull: false,
-            validate:{
-                notEmpty: true
-            }
+            type:DataTypes.STRING
         },
         settlement:{
             type:DataTypes.STRING

@@ -438,10 +438,10 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
 routes.post("/makeInvoiceNew", async(req, res) => {
   try {
     let result = req.body.chargeList, charges = [], createdInvoice = { };
-    const lastJB = await Invoice.findOne({ where:{type:'Job Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-    const lastJI = await Invoice.findOne({ where:{type:'Job Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-    const lastAI = await Invoice.findOne({ where:{type:'Agent Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-    const lastAB = await Invoice.findOne({ where:{type:'Agent Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
+    const lastJB = await Invoice.findOne({where:{type:'Job Bill'},     order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
+    const lastJI = await Invoice.findOne({where:{type:'Job Invoice'},  order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
+    const lastAI = await Invoice.findOne({where:{type:'Agent Invoice'},order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
+    const lastAB = await Invoice.findOne({where:{type:'Agent Bill'},   order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
 
     await result.forEach(async(x)=>{
       if(x.invoiceType=="Job Bill"){
@@ -524,5 +524,22 @@ routes.get('/getCPUS', async(req, res) => {
     res.json({status: 'error', result: error});
   }
 })
+
+routes.get('/testGetLastInvoice', async(req, res) => {
+  try {
+    const lastJI = await Invoice.findOne({ 
+      //limit:1,
+      where:{type:'Job Invoice'},
+      order: [[ 'invoice_Id', 'DESC' ]],
+      attributes:["invoice_Id"]
+    });
+    res.json({status: 'success', result: lastJI});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+})
+
+
 
 module.exports = routes;        
