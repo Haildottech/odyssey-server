@@ -25,8 +25,9 @@ const miscProfitLossRoutes = require('./routes/misc/profitLoss');
 const notificationRoutes = require('./routes/notifications');
 const assignedTasks = require('./routes/assignTasks');
 const nonGlParties = require('./routes/nonGlParties')
+const manifest = require('./routes/manifest')
 
-const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes, Delivery_Order, Item_Details } = require('./functions/Associations/jobAssociations/seaExport');
+const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes, Delivery_Order, Item_Details,Manifest, Manifest_Jobs } = require('./functions/Associations/jobAssociations/seaExport');
 const { Vendors, Vendor_Associations } = require('./functions/Associations/vendorAssociations');
 const {Clients, Client_Associations} = require('./functions/Associations/clientAssociation');
 const {Vouchers, Voucher_Heads} = require('./functions/Associations/voucherAssociations');
@@ -63,6 +64,7 @@ app.use("/notifications", notificationRoutes);
 app.use("/misc", miscPartiesRoutes, miscProfitLossRoutes);
 app.use("/tasks", assignedTasks);
 app.use("/nonGlParties", nonGlParties);
+app.use("/manifest", manifest );
 
 // abdullah added a new feature
 const PORT = process.env.PORT || 8081; 

@@ -803,4 +803,14 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
   }
 });
 
+
+routes.get("/getawb", async(req, res) => {
+  try {
+    const result = await SE_Job.findAll( {where: {[Op.or]: [{ operation: "AE" }, 
+    { operation: "AI" }]}, attributes:["jobNo", "id"]})
+    res.status(200).json({ result: result });
+  } catch (err) {
+    res.status(200).json({ result: err.message });
+  }
+})
 module.exports = routes;

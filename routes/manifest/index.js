@@ -1,0 +1,48 @@
+const {Manifest_Jobs, Manifest} = require('../../functions/Associations/jobAssociations/seaExport') 
+const routes = require('express').Router();
+// const Sequelize = require('sequelize');
+const moment = require("moment");
+
+
+routes.post("/create", async(req, res) => {
+    const createEquip = (list, id) => {
+        let result = [];
+        list.forEach((x)=>{
+                delete x.id
+                let SEJobId = x?.awb.split(',')[1]
+                let awb = x?.awb.split(',')[0]
+                result.push({...x, ManifestId : id, SEJobId, awb})
+        })
+        return result;
+    }
+
+    try {
+        let data = req.body
+        delete data.id
+        const check = await Manifest.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"]})
+        .catch((e) => console.log(e));
+        const result = await Manifest.create({
+        ...data,
+        no:check==null?1:parseInt(check.dataValues.no)+1,
+        job_no:`${"MNS"}-${check==null?1:parseInt(check.dataValues.no)+1}/${moment().format("YY")}`
+        }).catch((x)=>console.log(x.message))
+       await Manifest_Jobs.bulkCreate(createEquip(data.Manifest_Jobs, result.id)).catch((x)=>console.log(x))
+        res.json({status:'success', result: result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error.message});
+    }
+});
+
+routes.get('/get', async (req, res) =>{
+    try{
+    const result = await Manifest.findOne({where:{id: req.headers.id}, 
+    include:[{model: Manifest_Jobs}]})
+    res.json({status:"success", result:result})        
+    }
+    catch (error) {
+    res.json({status:"error", result:error.message})        
+    }
+})
+
+module.exports = routes
