@@ -430,14 +430,18 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
   try {
     let data = req.body;
-    const editedJob = await SE_Job.update({
-      pkgUnit:data.unit, 
-      pcs:data.pkgs, 
-      weightUnit:data.wtUnit, 
-      vol:data.cbm, 
-      shpVol:data.cbm,
-      weight:data.gross,
-    }, {where:{id:data.SEJobId}});
+    if(data.operation=="SI"){
+      console.log("==================== Inside SI Condition ========================")
+      await SE_Job.update({
+        pkgUnit:data.unit, 
+        pcs:data.pkgs, 
+        weightUnit:data.wtUnit, 
+        vol:data.cbm, 
+        shpVol:data.cbm,
+        weight:data.gross,
+      }, {where:{id:data.SEJobId}});
+    }
+
     await Bl.update(data, {where:{id:data.id}});
     data.Container_Infos.forEach((x, i)=>{
         data.Container_Infos[i] = {

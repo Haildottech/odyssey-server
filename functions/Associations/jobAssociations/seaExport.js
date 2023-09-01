@@ -74,32 +74,32 @@ Bl.hasMany(Stamps, {
         type: DataTypes.UUID,
         allowNull:false
     }
-})
-Stamps.belongsTo(Bl)
+});
+Stamps.belongsTo(Bl);
 
 SE_Job.hasMany(Job_notes, {
     foriegnKey :{
         type: DataTypes.UUID,
         allowNull:false
     }
-})
-Job_notes.belongsTo(SE_Job)
+});
+Job_notes.belongsTo(SE_Job);
 
 SE_Job.hasOne(Delivery_Order, {
     foriegnKey :{
         type: DataTypes.UUID,
         allowNull:false
     }
-})
-Delivery_Order.belongsTo(SE_Job)
+});
+Delivery_Order.belongsTo(SE_Job);
 
 Bl.hasMany(Dimensions, {
     foriegnKey :{
         type: DataTypes.UUID,
         allowNull:false
     }
-})
-Dimensions.belongsTo(Bl)
+});
+Dimensions.belongsTo(Bl);
 
 Bl.belongsTo(Clients,       {as:'notifyPartyOne'     });
 Bl.belongsTo(Clients,       {as:'notifyPartyTwo'     });
@@ -118,7 +118,7 @@ SE_Job.belongsTo(Clients,   {as:'shipper'            });
 SE_Job.belongsTo(Clients,   {as:'consignee'          });
 
 module.exports = { 
-    SE_Equipments, SE_Job, Bl, Container_Info, Stamps,
     Loading_Program, Job_notes, Delivery_Order, Item_Details,
-    Dimensions
+    SE_Equipments, SE_Job, Bl, Container_Info,
+    Stamps, Dimensions
 }

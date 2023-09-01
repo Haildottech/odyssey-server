@@ -7,16 +7,13 @@ const { Employees } = require("../../functions/Associations/employeeAssociations
 const Op = Sequelize.Op;
 
 //Voucher Types
-
 // (For Jobs)
 // Job Reciept 
 // Job Recievable
 // Job Payment 
 // Job Payble
- 
 // (For Expense)
 // Expenses Payment
-
 // Office_Vouchers
 // 0 Unpaid
 // 1 Fully-paid
