@@ -6,7 +6,7 @@ module.exports = (sequelize, DataTypes) => {
         flight_no:          { type:DataTypes.STRING },
         date:               { type:DataTypes.STRING },
         point_of_unloading: { type:DataTypes.STRING },
-        no:                 { type:DataTypes.STRING },
+        no:                 { type:DataTypes.INTEGER },
         job_no:             { type:DataTypes.STRING },
         companyId:          { type:DataTypes.STRING },
         
