@@ -179,7 +179,6 @@ routes.post('/updateNotes', async(req, res) => {
 
 routes.post("/addNote", async(req, res) => {
     try {
-        console.log(req.body)
         const result = await Job_notes.create(req.body);
         res.json({status:'success', result:result});
     }
@@ -811,7 +810,7 @@ routes.get("/getawb", async(req, res) => {
         { operation: "AE" },
         { operation: "AI" }
       ]},
-      attributes:["jobNo", "opertaion", "id"],
+      attributes:["jobNo", "operation", "id"],
       include:[{
         model:Bl,
         attributes:["mbl"]

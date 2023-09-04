@@ -1,6 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
     const Manifest_Jobs = sequelize.define("Manifest_Jobs", {
         awb:                                { type:DataTypes.STRING },
+        mbl:                                { type:DataTypes.STRING },
         no_of_pc:                           { type:DataTypes.STRING },
         nature_of_good:                     { type:DataTypes.STRING },
         goross_wt:                          { type:DataTypes.STRING },
