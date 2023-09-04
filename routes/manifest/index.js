@@ -38,7 +38,7 @@ routes.post("/edit", async(req, res) => {
     try {
         let data = req.body
         const result = await Manifest.update( {...data},{
-            where:{id:req.body.data.id}
+            where:{id: data.id}
           }).catch((x)=>console.log(x.message))
           data.Manifest_Jobs.forEach((x) => {
             return Manifest_Jobs.upsert({ ...x}) 
