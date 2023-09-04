@@ -33,11 +33,37 @@ routes.post("/create", async(req, res) => {
       res.json({status:'error', result:error.message});
     }
 });
+routes.post("/edit", async(req, res) => {
+
+    try {
+        let data = req.body
+        const result = await Manifest.update( {...data},{
+            where:{id:req.body.data.id}
+          }).catch((x)=>console.log(x.message))
+          data.Manifest_Jobs.forEach((x) => {
+            return Manifest_Jobs.upsert({ ...x}) 
+          })
+        res.json({status:'success', result: result});
+    }
+    catch (error) {
+      res.json({status:'error', result:error.message});
+    }
+});
 
 routes.get('/get', async (req, res) =>{
     try{
     const result = await Manifest.findOne({where:{id: req.headers.id}, 
     include:[{model: Manifest_Jobs}]})
+    res.json({status:"success", result:result})        
+    }
+    catch (error) {
+    res.json({status:"error", result:error.message})        
+    }
+})
+
+routes.get('/getAll', async (req, res) =>{
+    try{
+    const result = await Manifest.findAll({})
     res.json({status:"success", result:result})        
     }
     catch (error) {
