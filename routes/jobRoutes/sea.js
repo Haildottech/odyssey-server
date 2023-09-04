@@ -14,18 +14,18 @@ const { Voyage } = require("../../functions/Associations/vesselAssociations");
 const Op = Sequelize.Op;
 
 const getJob = (id) => {
-    const finalResult = SE_Job.findOne({
-      where:{id:id},
-      include:[
-        { model:SE_Equipments },
-        { model:Clients, attributes:['name'] }
-      ]
-    })
-    return finalResult 
+  const finalResult = SE_Job.findOne({
+    where:{id:id},
+    include:[
+      { model:SE_Equipments },
+      { model:Clients, attributes:['name'] }
+    ]
+  })
+  return finalResult 
 }
 
 routes.get("/getValues", async(req, res) => {
-
+  console.log("============Request Made=====================")
   let makeResult = (result, resultTwo) => {
     let finalResult = {shipper:[], consignee:[], notify:[], client:[]};
     result.forEach((x) => {
@@ -270,23 +270,23 @@ routes.post("/edit", async(req, res) => {
 
 routes.get("/get", async(req, res) => {
     try {
-        const result = await SE_Job.findAll({
-            where:{
-                companyId:req.headers.companyid,
-                operation:req.headers.operation
-            },
-            include:[
-                {model:Voyage},
-                {model:Employees, as:'created_by', attributes:['name'] },
-                {model:SE_Equipments},
-                {
-                    model:Clients,
-                    attributes:['name']
-                }
-            ],
-            order:[["createdAt", "DESC"]],
-        }).catch((x)=>console.log(x))
-        res.json({status:'success', result:result});
+      const result = await SE_Job.findAll({
+        where:{
+            companyId:req.headers.companyid,
+            operation:req.headers.operation
+        },
+        include:[
+            {model:Voyage},
+            {model:Employees, as:'created_by', attributes:['name'] },
+            {model:SE_Equipments},
+            {
+                model:Clients,
+                attributes:['name']
+            }
+        ],
+        order:[["createdAt", "DESC"]],
+      }).catch((x)=>console.log(x))
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -296,15 +296,15 @@ routes.get("/get", async(req, res) => {
 routes.get("/getJobById", async(req, res) => {
     try {
         const result = await SE_Job.findOne({
-            where:{id:req.headers.id},
-            include:[
-                {model:SE_Equipments},
-                {
-                    model:Clients,
-                    attributes:['name']
-                }
-            ],
-            order:[["createdAt", "DESC"]],
+          where:{id:req.headers.id},
+          include:[
+            {model:SE_Equipments},
+              {
+                model:Clients,
+                attributes:['name']
+              }
+          ],
+          order:[["createdAt", "DESC"]],
         });
         res.json({status:'success', result:result});
     }
@@ -315,10 +315,10 @@ routes.get("/getJobById", async(req, res) => {
 
 routes.get("/getSEJobIds", async(req, res) => {
     try {
-        const result = await SE_Job.findAll({
-            attributes:['id']
-        });
-        res.json({status:'success', result:result});
+      const result = await SE_Job.findAll({
+        attributes:['id']
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -328,20 +328,20 @@ routes.get("/getSEJobIds", async(req, res) => {
 routes.get("/getSEJobById", async(req, res) => {
     try {
       console.log(req.headers.operation)
-        const result = await SE_Job.findOne({
-            where:{id:req.headers.id},
-            include:[
-                {model:Bl, attributes:['id', 'hbl', 'hblDate', 'mbl', 'mblDate']},
-                {model:Voyage},
-                {model:SE_Equipments},
-                {
-                    model:Clients,
-                    attributes:['name']
-                }
-            ],
-            order:[["createdAt", "DESC"]],
-        });
-        res.json({status:'success', result:result});
+      const result = await SE_Job.findOne({
+        where:{id:req.headers.id},
+        include:[
+          {model:Bl, attributes:['id', 'hbl', 'hblDate', 'mbl', 'mblDate']},
+          {model:Voyage},
+          {model:SE_Equipments},
+          {
+            model:Clients,
+            attributes:['name']
+          }
+        ],
+        order:[["createdAt", "DESC"]],
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -351,38 +351,38 @@ routes.get("/getSEJobById", async(req, res) => {
 routes.get("/getJobsWithoutBl", async(req, res) => {
 
     const attr = [
-        'name', 'address1', 'address1', 'person1', 'mobile1',
-        'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+      'name', 'address1', 'address1', 'person1', 'mobile1',
+      'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
     ];
 
     try {
     const result = await SE_Job.findAll({
-        where:{id:req.headers.id},
-        attributes:[
-            'id', 'jobNo', 'pol',
-            'pod', 'fd', 'jobDate',
-            'shipDate', 'cutOffDate',
-            'delivery', 'freightType',
-            'operation', 'flightNo','VoyageId',
-            'cwtLine', 'cwtClient'
-        ],
-        order:[["createdAt", "DESC"]],
-        include:[
-          {
-              model:Bl,
-              required: false,
-          },
-          { model:SE_Equipments, attributes:['qty', 'size'] },
-          { model:Clients,  attributes:attr },
-          { model:Clients, as:'consignee', attributes:attr },
-          { model:Clients, as:'shipper', attributes:attr },
-          { model:Vendors, as:'overseas_agent', attributes:attr },
-          { model:Commodity, as:'commodity' },
-          { model:Vessel, as:'vessel', attributes:['name'] },
-          { model:Vendors, as:'air_line', attributes:['name'] },
-          { model:Vendors, as:'shipping_line', attributes:['name'] },
-          { model:Voyage, attributes:['voyage'] },
-        ],
+      where:{id:req.headers.id},
+      attributes:[
+        'id', 'jobNo', 'pol',
+        'pod', 'fd', 'jobDate',
+        'shipDate', 'cutOffDate',
+        'delivery', 'freightType',
+        'operation', 'flightNo','VoyageId',
+        'cwtLine', 'cwtClient'
+      ],
+      order:[["createdAt", "DESC"]],
+      include:[
+        {
+          model:Bl,
+          required: false,
+        },
+        { model:SE_Equipments, attributes:['qty', 'size'] },
+        { model:Clients,  attributes:attr },
+        { model:Clients, as:'consignee', attributes:attr },
+        { model:Clients, as:'shipper', attributes:attr },
+        { model:Vendors, as:'overseas_agent', attributes:attr },
+        { model:Commodity, as:'commodity' },
+        { model:Vessel, as:'vessel', attributes:['name'] },
+        { model:Vendors, as:'air_line', attributes:['name'] },
+        { model:Vendors, as:'shipping_line', attributes:['name'] },
+        { model:Voyage, attributes:['voyage'] },
+      ],
     });
     res.json({status:'success', result:result});
     }
@@ -393,34 +393,34 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
 
 routes.post("/createBl", async(req, res) => {
     try {
-        let data = req.body;
-        delete data.id
-        const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
-        const result = await Bl.create({...data, 
-            no:check==null?1:parseInt(check.no)+1, 
-            hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
-        }).catch((x)=>console.log(x))
-        // Creating Items for AE
-        if(data.Item_Details.length>0){
-          let tempItems = [];
-          data.Item_Details.forEach((x)=>{
-            x.id==null?delete x.id:null;
-            tempItems.push({...x, BlId:result.id})
-          })
-          await Item_Details.bulkCreate(tempItems)
-        }
-        await data.Container_Infos.forEach((x, i)=>{
-          data.Container_Infos[i] = {...x, BlId:result.id}
+      let data = req.body;
+      delete data.id
+      const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
+      const result = await Bl.create({...data, 
+        no:check==null?1:parseInt(check.no)+1, 
+        hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
+      }).catch((x)=>console.log(x))
+      // Creating Items for AE
+      if(data.Item_Details.length>0){
+        let tempItems = [];
+        data.Item_Details.forEach((x)=>{
+          x.id==null?delete x.id:null;
+          tempItems.push({...x, BlId:result.id})
         })
-        await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
-        if(data.Dimensions.length>0){
-          data.Dimensions.forEach((x, i)=>{
-            x.id==null?delete x.id:null;
-            data.Dimensions[i] = {...x, BlId:result.id}
-          })
-          await Dimensions.bulkCreate(data.Dimensions).catch((x)=>console.log(x))
-        }
-        res.json({status:'success', result:result.id  });
+        await Item_Details.bulkCreate(tempItems)
+      }
+      await data.Container_Infos.forEach((x, i)=>{
+        data.Container_Infos[i] = {...x, BlId:result.id}
+      })
+      await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
+      if(data.Dimensions.length>0){
+        data.Dimensions.forEach((x, i)=>{
+          x.id==null?delete x.id:null;
+          data.Dimensions[i] = {...x, BlId:result.id}
+        })
+        await Dimensions.bulkCreate(data.Dimensions).catch((x)=>console.log(x))
+      }
+      res.json({status:'success', result:result.id  });
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -431,7 +431,6 @@ routes.post("/editBl", async(req, res) => {
   try {
     let data = req.body;
     if(data.operation=="SI"){
-      console.log("==================== Inside SI Condition ========================")
       await SE_Job.update({
         pkgUnit:data.unit, 
         pcs:data.pkgs, 
@@ -813,12 +812,9 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
   console.log(req.body)
   let result
   try {
-    
     if(!req.body.doNo){
-
       const check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}})
       .catch((e) => console.log(e));
-
       result = await Delivery_Order.upsert({
         ...req.body, 
         no:check==null?1:parseInt(check.no)+1, 
