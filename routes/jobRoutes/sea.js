@@ -327,7 +327,7 @@ routes.get("/getSEJobIds", async(req, res) => {
 
 routes.get("/getSEJobById", async(req, res) => {
     try {
-      console.log(req.headers.operation)
+      console.log("============= Job Fetched =============")
       const result = await SE_Job.findOne({
         where:{id:req.headers.id},
         include:[
