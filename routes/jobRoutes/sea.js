@@ -327,7 +327,6 @@ routes.get("/getSEJobIds", async(req, res) => {
 
 routes.get("/getSEJobById", async(req, res) => {
     try {
-      console.log("============= Job Fetched =============")
       const result = await SE_Job.findOne({
         where:{id:req.headers.id},
         include:[
@@ -430,14 +429,18 @@ routes.post("/createBl", async(req, res) => {
 routes.post("/editBl", async(req, res) => {
   try {
     let data = req.body;
-    if(data.operation=="SI"){
+    let obj = {
+      pkgUnit:data.unit, 
+      pcs:data.pkgs, 
+      weightUnit:data.wtUnit, 
+      vol:data.cbm, 
+      shpVol:data.cbm,
+      weight:data.gross,
+      cwtClient:data.chargableWt
+    }
+    if(data.operation=="SI" || data.operation=="AI"){
       await SE_Job.update({
-        pkgUnit:data.unit, 
-        pcs:data.pkgs, 
-        weightUnit:data.wtUnit, 
-        vol:data.cbm, 
-        shpVol:data.cbm,
-        weight:data.gross,
+        ...obj
       }, {where:{id:data.SEJobId}});
     }
 

@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
     const SE_Job = sequelize.define("SE_Job", {
         jobNo: { type:DataTypes.STRING },
-        jobId: { type:DataTypes.STRING },
+        jobId: { type:DataTypes.INTEGER },
         title:{ type:DataTypes.STRING },
         customerRef:{ type:DataTypes.STRING },
         fileNo:{ type:DataTypes.STRING },
