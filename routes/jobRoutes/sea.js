@@ -447,12 +447,12 @@ routes.post("/editBl", async(req, res) => {
     await Bl.update(data, {where:{id:data.id}});
     data.Container_Infos.forEach((x, i)=>{
         data.Container_Infos[i] = {
-            ...x, BlId:data.id, 
-            pkgs:x.pkgs.toString(),
-            gross:x.gross.toString(),
-            net:x.net.toString(),
-            tare:x.tare.toString(),
-            cbm:x.cbm?.toString(),
+          ...x, BlId:data.id, 
+          pkgs:x.pkgs.toString(),
+          gross:x.gross.toString(),
+          net:x.net.toString(),
+          tare:x.tare.toString(),
+          cbm:x.cbm?.toString(),
         }
     })
     const result = await Container_Info.bulkCreate(data.Container_Infos,{
@@ -499,36 +499,34 @@ routes.post("/editBl", async(req, res) => {
 
 routes.post("/findJobByNo", async(req, res) => {
     try {
-        const attr = [
-            'name', 'address1', 'address1', 'person1', 'mobile1',
-            'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+      const attr = [
+        'name', 'address1', 'address1', 'person1', 'mobile1',
+        'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+      ]
+      const result = await SE_Job.findAll({
+        where:{jobNo:req.body.no},
+        attributes:[
+          'id', 'jobNo', 'pol',
+          'pod', 'fd', 'jobDate',
+          'shipDate', 'cutOffDate',
+          'delivery', 'freightType',
+          'freightPaybleAt','VoyageId', 'flightNo'
+        ],
+        order:[["createdAt", "DESC"]],
+        include:[
+          { model:SE_Equipments, attributes:['qty', 'size'] },
+          { model:Clients,  attributes:attr },
+          { model:Clients, as:'consignee', attributes:attr },
+          { model:Clients, as:'shipper', attributes:attr },
+          { model:Vendors, as:'overseas_agent', attributes:attr },
+          { model:Commodity, as:'commodity' },
+          { model:Vessel,  as:'vessel', attributes:['name'] },
+          { model:Vendors, as:'air_line', attributes:['name'] },
+          { model:Vendors, as:'shipping_line', attributes:['name'] },
+          { model:Voyage, attributes:['voyage'] },
         ]
-        const result = await SE_Job.findAll({
-            where:{jobNo:req.body.no},
-            attributes:[
-                'id', 'jobNo', 'pol',
-                'pod', 'fd', 'jobDate',
-                'shipDate', 'cutOffDate',
-                'delivery', 'freightType',
-                'freightPaybleAt','VoyageId', 'flightNo'
-            ],
-            order:[["createdAt", "DESC"]],
-            include:[
-                { model:SE_Equipments, attributes:['qty', 'size'] },
-                { model:Clients,  attributes:attr },
-                { model:Clients, as:'consignee', attributes:attr },
-                { model:Clients, as:'shipper', attributes:attr },
-                { model:Vendors, as:'overseas_agent', attributes:attr },
-                { model:Commodity, as:'commodity' },
-                { model:Vessel,  as:'vessel', attributes:['name'] },
-                { model:Vendors, as:'air_line', attributes:['name'] },
-                { model:Vendors, as:'shipping_line', attributes:['name'] },
-                { model:Voyage, attributes:['voyage'] },
-                
-                
-            ]
-        });
-        res.json({status:'success', result:result});
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -537,13 +535,13 @@ routes.post("/findJobByNo", async(req, res) => {
 
 routes.get("/getAllBls", async(req, res) => {
     try {
-        const result = await Bl.findAll({
-            include:[
-                { model:SE_Job, attributes:["jobNo"] },
-                { model:Container_Info }
-            ]
-        });
-        res.json({status:'success', result:result});
+      const result = await Bl.findAll({
+        include:[
+          { model:SE_Job, attributes:["jobNo"] },
+          { model:Container_Info }
+        ]
+      });
+      res.json({status:'success', result:result});
     }
     catch (error) {
       res.json({status:'error', result:error});
