@@ -214,7 +214,7 @@ routes.get("/getAccountActivity", async (req, res) => {
       include: [
         {
           model: Voucher_Heads,
-          attributes: ["amount", "type"],
+          attributes: ["amount", "type", "defaultAmount"],
           include: [
             {
               model: Child_Account,

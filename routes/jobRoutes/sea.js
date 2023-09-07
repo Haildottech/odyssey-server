@@ -391,39 +391,54 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
 });
 
 routes.post("/createBl", async(req, res) => {
-    try {
-      let data = req.body;
-      delete data.id
-      const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
-      const result = await Bl.create({...data, 
-        no:check==null?1:parseInt(check.no)+1, 
-        hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
-      }).catch((x)=>console.log(x))
-      // Creating Items for AE
-      if(data.Item_Details.length>0){
-        let tempItems = [];
-        data.Item_Details.forEach((x)=>{
-          x.id==null?delete x.id:null;
-          tempItems.push({...x, BlId:result.id})
-        })
-        await Item_Details.bulkCreate(tempItems)
-      }
-      await data.Container_Infos.forEach((x, i)=>{
-        data.Container_Infos[i] = {...x, BlId:result.id}
+  try {
+    let data = req.body;
+    delete data.id
+    let obj = {
+      pkgUnit:data.unit, 
+      pcs:data.pkgs, 
+      weightUnit:data.wtUnit, 
+      vol:data.cbm, 
+      shpVol:data.cbm,
+      weight:data.gross,
+      cwtClient:data.chargableWt
+    }
+    if(data.operation=="SI" || data.operation=="AI" || data.operation=="SE"){
+      console.log("Here")
+      await SE_Job.update({
+        ...obj
+      }, {where:{id:data.SEJobId}});
+    }
+    const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
+    const result = await Bl.create({...data, 
+      no:check==null?1:parseInt(check.no)+1, 
+      hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
+    }).catch((x)=>console.log(x))
+    // Creating Items for AE
+    if(data.Item_Details.length>0){
+      let tempItems = [];
+      data.Item_Details.forEach((x)=>{
+        x.id==null?delete x.id:null;
+        tempItems.push({...x, BlId:result.id})
       })
-      await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
-      if(data.Dimensions.length>0){
-        data.Dimensions.forEach((x, i)=>{
-          x.id==null?delete x.id:null;
-          data.Dimensions[i] = {...x, BlId:result.id}
-        })
-        await Dimensions.bulkCreate(data.Dimensions).catch((x)=>console.log(x))
-      }
-      res.json({status:'success', result:result.id  });
+      await Item_Details.bulkCreate(tempItems)
     }
-    catch (error) {
-      res.json({status:'error', result:error});
+    await data.Container_Infos.forEach((x, i)=>{
+      data.Container_Infos[i] = {...x, BlId:result.id}
+    })
+    await Container_Info.bulkCreate(data.Container_Infos).catch((x)=>console.log(x))
+    if(data.Dimensions.length>0){
+      data.Dimensions.forEach((x, i)=>{
+        x.id==null?delete x.id:null;
+        data.Dimensions[i] = {...x, BlId:result.id}
+      })
+      await Dimensions.bulkCreate(data.Dimensions).catch((x)=>console.log(x))
     }
+    res.json({status:'success', result:result.id  });
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.post("/editBl", async(req, res) => {
@@ -437,28 +452,27 @@ routes.post("/editBl", async(req, res) => {
       shpVol:data.cbm,
       weight:data.gross,
       cwtClient:data.chargableWt
-    }
-    if(data.operation=="SI" || data.operation=="AI"){
+    };
+    if(data.operation=="SI" || data.operation=="AI" || data.operation=="SE"){
       await SE_Job.update({
         ...obj
       }, {where:{id:data.SEJobId}});
-    }
-
+    };
     await Bl.update(data, {where:{id:data.id}});
     data.Container_Infos.forEach((x, i)=>{
-        data.Container_Infos[i] = {
-          ...x, BlId:data.id, 
-          pkgs:x.pkgs.toString(),
-          gross:x.gross.toString(),
-          net:x.net.toString(),
-          tare:x.tare.toString(),
-          cbm:x.cbm?.toString(),
-        }
-    })
+      data.Container_Infos[i] = {
+        ...x, BlId:data.id, 
+        pkgs:x.pkgs.toString(),
+        gross:x.gross.toString(),
+        net:x.net.toString(),
+        tare:x.tare.toString(),
+        cbm:x.cbm?.toString(),
+      }
+    });
     const result = await Container_Info.bulkCreate(data.Container_Infos,{
-        updateOnDuplicate: [
-          "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
-        ],
+      updateOnDuplicate: [
+        "pkgs", "no", "seal", "size", "rategroup", "gross", "net", "tare", "wtUnit", "cbm", "pkgs", "unit", "temp", "loadType", "remarks", "detention",  "demurge", "plugin", "dg", "number", "date", "top", "right", "left", "front", "back"
+      ],
     });
     // Creating Items for AE
     if(data.Item_Details.length>0){
@@ -472,7 +486,7 @@ routes.post("/editBl", async(req, res) => {
           "noOfPcs", "unit", "grossWt", "kh_lb", "r_class", "itemNo", "chargableWt", "rate_charge", "total", "lineWeight"
         ],
       })
-    }
+    };
     if(data.Dimensions.length>0){
       let tempItems = [];
       data.Dimensions.forEach((x)=>{
@@ -484,11 +498,11 @@ routes.post("/editBl", async(req, res) => {
           "length", "width", "height", "qty", "vol", "weight"
         ],
       })//.catch((x)=>console.log(x.message))
-    }
-    await Stamps.destroy({ where:{id:data.deleteArr} })
-    await Container_Info.destroy({ where:{id:req.body.deletingContinersList} })
-    await Item_Details.destroy({ where:{id:req.body.deletingItemList} })
-    await Dimensions.destroy({ where:{id:req.body.deletingDimensionsList} })
+    };
+    await Stamps.destroy({ where:{id:data.deleteArr} });
+    await Container_Info.destroy({ where:{id:req.body.deletingContinersList} });
+    await Item_Details.destroy({ where:{id:req.body.deletingItemList} });
+    await Dimensions.destroy({ where:{id:req.body.deletingDimensionsList} });
     await data.stamps?.map((x) => Stamps.upsert({...x, BlId:req.body.id}));
     res.json({status:'success', result: result});   
   } 
@@ -498,39 +512,40 @@ routes.post("/editBl", async(req, res) => {
 }); 
 
 routes.post("/findJobByNo", async(req, res) => {
-    try {
-      const attr = [
-        'name', 'address1', 'address1', 'person1', 'mobile1',
-        'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+  try {
+    const attr = [
+      'name', 'address1', 'address1', 'person1', 'mobile1',
+      'person2', 'mobile2', 'telephone1', 'telephone2', 'infoMail'
+    ];
+    const result = await SE_Job.findAll({
+      where:{jobNo:req.body.no},
+      attributes:[
+        'jobNo', 'pol',
+        'flightNo','id', 
+        'pod', 'fd', 'jobDate',
+        'shipDate', 'cutOffDate',
+        'delivery', 'freightType',
+        'freightPaybleAt','VoyageId',
+      ],
+      order:[["createdAt", "DESC"]],
+      include:[
+        { model:SE_Equipments, attributes:['qty', 'size'] },
+        { model:Clients,  attributes:attr },
+        { model:Clients, as:'consignee', attributes:attr },
+        { model:Clients, as:'shipper', attributes:attr },
+        { model:Vendors, as:'overseas_agent', attributes:attr },
+        { model:Commodity, as:'commodity' },
+        { model:Vessel,  as:'vessel', attributes:['name'] },
+        { model:Vendors, as:'air_line', attributes:['name'] },
+        { model:Vendors, as:'shipping_line', attributes:['name'] },
+        { model:Voyage, attributes:['voyage'] },
       ]
-      const result = await SE_Job.findAll({
-        where:{jobNo:req.body.no},
-        attributes:[
-          'id', 'jobNo', 'pol',
-          'pod', 'fd', 'jobDate',
-          'shipDate', 'cutOffDate',
-          'delivery', 'freightType',
-          'freightPaybleAt','VoyageId', 'flightNo'
-        ],
-        order:[["createdAt", "DESC"]],
-        include:[
-          { model:SE_Equipments, attributes:['qty', 'size'] },
-          { model:Clients,  attributes:attr },
-          { model:Clients, as:'consignee', attributes:attr },
-          { model:Clients, as:'shipper', attributes:attr },
-          { model:Vendors, as:'overseas_agent', attributes:attr },
-          { model:Commodity, as:'commodity' },
-          { model:Vessel,  as:'vessel', attributes:['name'] },
-          { model:Vendors, as:'air_line', attributes:['name'] },
-          { model:Vendors, as:'shipping_line', attributes:['name'] },
-          { model:Voyage, attributes:['voyage'] },
-        ]
-      });
-      res.json({status:'success', result:result});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+    });
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.get("/getAllBls", async(req, res) => {
@@ -549,259 +564,256 @@ routes.get("/getAllBls", async(req, res) => {
 });
 
 routes.get("/getBlById", async(req, res) => {
-    try {
-        const result = await Bl.findOne({
-            where:{id:req.headers.id},
-            include:[
-                {
-                    model:SE_Job,
-                    attributes:["jobNo"]
-                },
-                {model: Stamps},
-                {model: Container_Info},
-                {model: Item_Details},
-                {model: Dimensions},
-            ]
-        });
-        res.json({status:'success', result:result});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    const result = await Bl.findOne({
+      where:{id:req.headers.id},
+      include:[
+        {
+          model:SE_Job,
+          attributes:["jobNo"]
+        },
+        {model: Stamps},
+        {model: Container_Info},
+        {model: Item_Details},
+        {model: Dimensions},
+    ]});
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.get("/getStamps", async(req, res) => {
-    try {
-        const result = await Stamps.findAll({
-            where:{BlId:req.headers.id},
-        });
-        res.json({status:'success', result:result});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    const result = await Stamps.findAll({
+        where:{BlId:req.headers.id},
+    });
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 }); 
 
 routes.get("/getLoadingProgram", async(req, res) => {
-    try {
-        const result = await Loading_Program.findOne({
-            where:{SEJobId:req.headers.id},
-        });
-        res.json({status:'success', result:result});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    const result = await Loading_Program.findOne({
+      where:{SEJobId:req.headers.id},
+    });
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 }); 
 
 routes.post("/upsertLoadingProgram", async(req, res) => {
-    try {
-        const result = await Loading_Program.upsert(req.body)
-        .catch((x)=>console.log(x))
-        res.json({status:'success', result:result});
-        console.log(req.body)
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    const result = await Loading_Program.upsert(req.body)
+    .catch((x)=>console.log(x))
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 }); 
 
 routes.get("/getJobByValues", async (req, res) => {
-
-    let value = req.headers;
-    let obj = {
-      createdAt: {
-        [Op.gte]: moment(value.from).toDate(),
-        [Op.lte]: moment(value.to).add(1, 'days').toDate(),
-      }
-    };
-    let newObj = {};
-    if (value.client) {
-      obj.ClientId = value.client;
+  let value = req.headers;
+  let obj = {
+    createdAt: {
+      [Op.gte]: moment(value.from).toDate(),
+      [Op.lte]: moment(value.to).add(1, 'days').toDate(),
     }
-    if (value.final_destination) {
-      obj.fd = value.final_destination;
-    }
-    if (value.shipping_air_line) {
-      obj.shippingLineId = value.shipping_air_line;
-    }
-    if (value.consignee) {
-      obj.consigneeId = value.consignee;
-    }
-    if (value.oversease_agent) {
-      obj.overseasAgentId = value.oversease_agent;
-    }
-    if (value.vessel) {
-      obj.vesselId = value.vessel;
-    }
-    if (value.clearing_agent) {
-      obj.customAgentId = value.clearing_agent;
-    }
-    if (value.vendor) {
-      obj.localVendorId = value.vendor;
-    }
-     if(value.air_line) {
-      obj.airLineId = value.air_line;
-    }
-    if(value.hbl) {
-      newObj.hbl = value.hbl;
-    }
-    if(value.mbl) {
-      newObj.mbl = value.mbl;
-    }
-    try {
-      const jobs = await SE_Job.findAll({
-        where: obj,
-        include:[
-          { model:Bl, where: newObj, include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
-          { model: Clients, attributes:   ["name"] },
-          { model: Vendors, attributes:   ["name"], as : "local_vendor"},
-          { model: Vendors, attributes:   ["name"], as : "shipping_line"},
-          { model: Vendors, attributes:   ["name"], as :"air_line"},
-          { model: Vessel , attributes:   ["name"], as :"vessel" },
-          { model: Commodity, attributes: ["name"], as :"commodity" },
-          { model: Employees, attributes: ["name"], as :"sales_representator" },
-          { model: Clients, attributes:   ["name"], as :"shipper" },
-          { model: Clients, attributes:   ["name"], as :"consignee" },
-      ]});
-      res.status(200).json({ result: jobs });
-    } catch (err) {
-      res.status(200).json({ result: err.message });
-    }
+  };
+  let newObj = {};
+  if (value.client) {
+    obj.ClientId = value.client;
+  }
+  if (value.final_destination) {
+    obj.fd = value.final_destination;
+  }
+  if (value.shipping_air_line) {
+    obj.shippingLineId = value.shipping_air_line;
+  }
+  if (value.consignee) {
+    obj.consigneeId = value.consignee;
+  }
+  if (value.oversease_agent) {
+    obj.overseasAgentId = value.oversease_agent;
+  }
+  if (value.vessel) {
+    obj.vesselId = value.vessel;
+  }
+  if (value.clearing_agent) {
+    obj.customAgentId = value.clearing_agent;
+  }
+  if (value.vendor) {
+    obj.localVendorId = value.vendor;
+  }
+    if(value.air_line) {
+    obj.airLineId = value.air_line;
+  }
+  if(value.hbl) {
+    newObj.hbl = value.hbl;
+  }
+  if(value.mbl) {
+    newObj.mbl = value.mbl;
+  }
+  try {
+    const jobs = await SE_Job.findAll({
+      where: obj,
+      include:[
+        { model:Bl, where: newObj, include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
+        { model: Clients, attributes:   ["name"] },
+        { model: Vendors, attributes:   ["name"], as : "local_vendor"},
+        { model: Vendors, attributes:   ["name"], as : "shipping_line"},
+        { model: Vendors, attributes:   ["name"], as :"air_line"},
+        { model: Vessel , attributes:   ["name"], as :"vessel" },
+        { model: Commodity, attributes: ["name"], as :"commodity" },
+        { model: Employees, attributes: ["name"], as :"sales_representator" },
+        { model: Clients, attributes:   ["name"], as :"shipper" },
+        { model: Clients, attributes:   ["name"], as :"consignee" },
+    ]});
+    res.status(200).json({ result: jobs });
+  } catch (err) {
+    res.status(200).json({ result: err.message });
+  }
 });
 
 routes.get("/getValuesJobList", async (req, res) => {
 
-    let makeResult = (result, resultTwo) => {
-      let finalResult = { consignee: [], client: [] };
-      result.forEach((x) => {
-        if (x.types.includes("Consignee")) {
-          finalResult.consignee.push({
-            name: `${x.name} (${x.code})`,
-            id: x.id,
-            types: x.types,
-          });
-        }
-      });
-      finalResult.client = resultTwo.map((x) => {
-        return { name: `${x.name} (${x.code})`, id: x.id, types: x.types };
-      });
-      return finalResult;
-    };
-  
-    let makeResultTwo = (result) => {
-      let finalResult = {
-        overseasAgent: [],
-        chaChb: [],
-        sLine: [],
-        airLine: []
-      };
-      result.forEach((x) => {
-        if (x.types.includes("Overseas Agent")) {
-          finalResult.overseasAgent.push({
-            name: `${x.name} (${x.code})`,
-            id: x.id,
-            types: x.types,
-          });
-        }
-        if (x.types.includes("CHA/CHB")) {
-          finalResult.chaChb.push({
-            name: `${x.name} (${x.code})`,
-            id: x.id,
-            types: x.types,
-          });
-        }
-  
-        if (x.types.includes("Shipping Line")) {
-          finalResult.sLine.push({
-            name: `${x.name} (${x.code})`,
-            id: x.id,
-            types: x.types,
-          });
-        }
-        if (x.types.includes("Air Line")) {
-          finalResult.airLine.push({
-            name: `${x.name} (${x.code})`,
-            id: x.id,
-            types: x.types,
-          });
-        } 
-      });
-      return finalResult;
-    };
+  let makeResult = (result, resultTwo) => {
+    let finalResult = { consignee: [], client: [] };
+    result.forEach((x) => {
+      if (x.types.includes("Consignee")) {
+        finalResult.consignee.push({
+          name: `${x.name} (${x.code})`,
+          id: x.id,
+          types: x.types,
+        });
+      }
+    });
+    finalResult.client = resultTwo.map((x) => {
+      return { name: `${x.name} (${x.code})`, id: x.id, types: x.types };
+    });
+    return finalResult;
+  };
 
-    try {
-      const resultOne = await Clients.findAll({
-        attributes: ["id", "name", "types", "code"],
-        order: [["createdAt", "DESC"]],
-      });
-      const result = await Clients.findAll({
-        where: {
-          types: {
-            [Op.or]: [{ [Op.substring]: "Consignee" }],
-          },
+  let makeResultTwo = (result) => {
+    let finalResult = {
+      overseasAgent: [],
+      chaChb: [],
+      sLine: [],
+      airLine: []
+    };
+    result.forEach((x) => {
+      if (x.types.includes("Overseas Agent")) {
+        finalResult.overseasAgent.push({
+          name: `${x.name} (${x.code})`,
+          id: x.id,
+          types: x.types,
+        });
+      }
+      if (x.types.includes("CHA/CHB")) {
+        finalResult.chaChb.push({
+          name: `${x.name} (${x.code})`,
+          id: x.id,
+          types: x.types,
+        });
+      }
+
+      if (x.types.includes("Shipping Line")) {
+        finalResult.sLine.push({
+          name: `${x.name} (${x.code})`,
+          id: x.id,
+          types: x.types,
+        });
+      }
+      if (x.types.includes("Air Line")) {
+        finalResult.airLine.push({
+          name: `${x.name} (${x.code})`,
+          id: x.id,
+          types: x.types,
+        });
+      } 
+    });
+    return finalResult;
+  };
+
+  try {
+    const resultOne = await Clients.findAll({
+      attributes: ["id", "name", "types", "code"],
+      order: [["createdAt", "DESC"]],
+    });
+    const result = await Clients.findAll({
+      where: {
+        types: {
+          [Op.or]: [{ [Op.substring]: "Consignee" }],
         },
-        attributes: ["id", "name", "types", "code"],
-        order: [["createdAt", "DESC"]],
-      });
-      const resultThree = await Vendors.findAll({
-        where: {
-          types: {
-            [Op.or]: [
-              { [Op.substring]: "CHA/CHB" },
-              { [Op.substring]: "Overseas Agent" },
-              { [Op.substring]: "Shipping Line" },
-            ],
-          },
+      },
+      attributes: ["id", "name", "types", "code"],
+      order: [["createdAt", "DESC"]],
+    });
+    const resultThree = await Vendors.findAll({
+      where: {
+        types: {
+          [Op.or]: [
+            { [Op.substring]: "CHA/CHB" },
+            { [Op.substring]: "Overseas Agent" },
+            { [Op.substring]: "Shipping Line" },
+          ],
         },
-        attributes: ["id", "name", "types", "code"],
-        order: [["createdAt", "DESC"]],
-      });
-  
-      const vendor = await Vendors.findAll({
-        attributes: ["id", "name", "types", "code"],
-        order: [["createdAt", "DESC"]],
-      });
-      const resultTwo = await Commodity.findAll({
-        order: [["createdAt", "DESC"]],
-        attributes: ["id", "name", "hs"],
-      });
-  
-      const resultFour = await Vessel.findAll({
-        order: [["createdAt", "DESC"]],
-        attributes: ["id", "name", "code", "carrier"],
-        include: [
-          {
-            model: Voyage,
-          },
-        ],
-      });
-      const Sr = await Employees.findAll({
-        where: { represent: { [Op.substring]: "sr" } },
-        attributes: ["id", "name"],
-      });
-      res.json({
-        status: "success",
-        result: {
-          vendor: vendor,
-          party: makeResult(result, resultOne),
-          vendor_details: makeResultTwo(resultThree),
-          commodity: resultTwo,
-          vessel: resultFour,
-          sr: Sr,
+      },
+      attributes: ["id", "name", "types", "code"],
+      order: [["createdAt", "DESC"]],
+    });
+
+    const vendor = await Vendors.findAll({
+      attributes: ["id", "name", "types", "code"],
+      order: [["createdAt", "DESC"]],
+    });
+    const resultTwo = await Commodity.findAll({
+      order: [["createdAt", "DESC"]],
+      attributes: ["id", "name", "hs"],
+    });
+
+    const resultFour = await Vessel.findAll({
+      order: [["createdAt", "DESC"]],
+      attributes: ["id", "name", "code", "carrier"],
+      include: [
+        {
+          model: Voyage,
         },
-      });
-    } catch (error) {
-      res.json({ status: "error", result: error });
-    }
+      ],
+    });
+    const Sr = await Employees.findAll({
+      where: { represent: { [Op.substring]: "sr" } },
+      attributes: ["id", "name"],
+    });
+    res.json({
+      status: "success",
+      result: {
+        vendor: vendor,
+        party: makeResult(result, resultOne),
+        vendor_details: makeResultTwo(resultThree),
+        commodity: resultTwo,
+        vessel: resultFour,
+        sr: Sr,
+      },
+    });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
 });
 
 routes.get("/getDeliveryOrder", async(req, res) => {
   try {
-      const result = await Delivery_Order.findOne({
-          where:{SEJobId:req.headers.id},
-      }).catch((x)=>console.log(x))
-      res.json({status:'success', result:result});
+    const result = await Delivery_Order.findOne({
+        where:{SEJobId:req.headers.id},
+    }).catch((x)=>console.log(x))
+    res.json({status:'success', result:result});
   }
   catch (error) {
     res.json({status:'error', result:error});
@@ -810,7 +822,6 @@ routes.get("/getDeliveryOrder", async(req, res) => {
 
 routes.post("/upsertDeliveryOrder", async(req, res) => {
 
-  console.log(req.body)
   let result
   try {
     if(!req.body.doNo){
@@ -821,19 +832,16 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
         no:check==null?1:parseInt(check.no)+1, 
         doNo:`${req.body.companyId==1?'SNS':req.body.companyId==2?'CLS':'ACS'}-DO${check==null?1:parseInt(check.no)+1}-${moment().format("YY")}`
       }).catch((x)=>console.log(x))
-
     } else {
-      let check;
-
-      !req.body.id?check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}}):
+    let check;
+    !req.body.id?
+      check = await Delivery_Order.findOne({order: [ [ 'no', 'DESC' ]], attributes:["no"], where:{operation:req.body.operation, companyId:req.body.companyId}}):
       null
-
-      result = await Delivery_Order.upsert({
-        ...req.body, 
-        no:!req.body.id? check==null?1:parseInt(check.no)+1 : req.body.no, 
-        doNo:req.body.doNo
-      }).catch((x)=>console.log(x))
-
+    result = await Delivery_Order.upsert({
+      ...req.body, 
+      no:!req.body.id? check==null?1:parseInt(check.no)+1 : req.body.no, 
+      doNo:req.body.doNo
+    }).catch((x)=>console.log(x))
   }
   res.json({status:'success', result: result});
   }
