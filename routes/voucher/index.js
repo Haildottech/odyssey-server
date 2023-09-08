@@ -1,10 +1,17 @@
-const { Vouchers, Voucher_Heads, Office_Vouchers } = require("../../functions/Associations/voucherAssociations");
+const { 
+  Vouchers,
+  Voucher_Heads,
+  Office_Vouchers
+} = require("../../functions/Associations/voucherAssociations");
 const { Child_Account } = require("../../functions/Associations/accountAssociations");
 const routes = require("express").Router();
 const Sequelize = require("sequelize");
 const moment = require("moment");
 const { Employees } = require("../../functions/Associations/employeeAssociations");
+const { Clients, Client_Associations } = require("../../functions/Associations/clientAssociation");
+const { Vendors, Vendor_Associations } = require("../../functions/Associations/vendorAssociations");
 const Op = Sequelize.Op;
+
 
 //Voucher Types
 // (For Jobs)
@@ -33,11 +40,10 @@ const setVoucherHeads = (id, heads) => {
 
 routes.post("/ApproveOfficeVoucher", async (req, res) => {
   try {
-    console.log(req.body)
     const result = await Office_Vouchers.update(
       {approved:req.body.approved, VoucherId:req.body.VoucherId}, 
       {where:{id:req.body.id}}
-    )//.catch((x)=>console.log(x));
+    );
     
     res.json({ status: "success", result:result });
   } catch (error) {
@@ -54,7 +60,7 @@ routes.post("/recordReverse", async (req, res) => {
     await Office_Vouchers.update(
       { reverseAmount:req.body.reverseAmount, paid:req.body.paid },
       { where:{id:req.body.id} }
-    ).catch((x)=>console.log(x))
+    );
     res.json({ status: "success", result:result });
   } catch (error) {
     res.json({ status: "error", result: error });
@@ -63,7 +69,7 @@ routes.post("/recordReverse", async (req, res) => {
 
 routes.post("/OfficeVoucherUpsert", async (req, res) => {
   try {
-    const result = await Office_Vouchers.upsert(req.body).catch((x)=>console.log(x));
+    const result = await Office_Vouchers.upsert(req.body);
     res.json({ status: "success", result:result });
   } catch (error) {
     res.json({ status: "error", result: error });
@@ -115,9 +121,9 @@ routes.post("/voucherCreation", async (req, res) => {
       }-${req.body.vType}-${
         check == null ? 1 : parseInt(check.voucher_No) + 1
       }/${moment().format("YY")}`,
-    }).catch((x)=>console.log(x));
+    });
     let dataz = await setVoucherHeads(result.id, req.body.Voucher_Heads);
-    await Voucher_Heads.bulkCreate(dataz).catch((x)=>console.log(x))
+    await Voucher_Heads.bulkCreate(dataz);
     res.json({ status: "success", result:result });
   } catch (error) {
     res.json({ status: "error", result: error });
@@ -138,8 +144,7 @@ routes.post("/voucherEdit", async (req, res) => {
     }, { where: { id: req.body.id } })
 
     req.body.Voucher_Heads.forEach(async(x) => {
-      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, defaultAmount : "-" })
-      .catch((x)=>console.log(x.message))
+      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, defaultAmount : "-" });
     })
     await res.json({ status: "success"});
   } catch (error) {
@@ -149,7 +154,6 @@ routes.post("/voucherEdit", async (req, res) => {
 
 routes.post("/deleteVoucher", async (req, res) => {
   try {
-    console.log(req.body.id);
     let obj = {};
     if(req.body.type=="VoucherId Exists"){
       obj = { id:req.body.id }
@@ -161,14 +165,13 @@ routes.post("/deleteVoucher", async (req, res) => {
     }
     const findOne = await Vouchers.findOne({
       where: obj,
-    }).catch((x) => console.log(1, x));
-    console.log(findOne)
+    });
     const resultOne = await Voucher_Heads.destroy({
       where: { VoucherId: findOne.dataValues.id },
-    }).catch((x) => console.log(2, x));
+    });
     const resultTwo = await Vouchers.destroy({
       where: { id: findOne.dataValues.id },
-    }).catch((x) => console.log(3, x));
+    });
     await res.json({ status: "success", result: { resultOne, resultTwo } });
   } catch (error) {
     res.json({ status: "error", result: error });
@@ -225,7 +228,6 @@ routes.get("/getAccountActivity", async (req, res) => {
       ],
       order: [["createdAt", "ASC"]],
     });
-
     await res.json({ status: "success", result: result });
   } catch (error) {
     res.json({ status: "error", result: error });
@@ -245,7 +247,6 @@ routes.get("/getAllVouchers", async (req, res) => {
 
 routes.get("/getVoucherById", async (req, res) => {
   try {
-    console.log(req.headers);
     const result = await Vouchers.findOne({
       where: { id: req.headers.id },  
       include: [{ model: Voucher_Heads }],  

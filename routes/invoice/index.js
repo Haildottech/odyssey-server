@@ -11,7 +11,6 @@ const { Clients }=require("../../functions/Associations/clientAssociation");
 const { Accounts, Vessel } = require("../../models");
 const routes = require('express').Router();
 const Sequelize = require('sequelize');
-const { Router } = require("express");
 const moment = require("moment");
 const Op = Sequelize.Op;
 
@@ -530,7 +529,7 @@ routes.get('/testGetLastInvoice', async(req, res) => {
     const lastJI = await Invoice.findOne({ 
       //limit:1,
       where:{type:'Job Invoice'},
-      order: [[ 'invoice_Id', 'DESC' ]],
+      order: [['invoice_Id', 'DESC']],
       attributes:["invoice_Id"]
     });
     res.json({status: 'success', result: lastJI});
@@ -540,6 +539,66 @@ routes.get('/testGetLastInvoice', async(req, res) => {
   }
 })
 
+routes.get("/invoiceBalancing", async (req, res) => {
+  try {
 
+    let srObj = {};
+    let invoiceObj = {
+      createdAt: {
+        [Op.gte]: moment(req.headers.from).toDate(),
+        [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+      },
+      status:{ [Op.ne]: null },
+    };
+    req.headers.company?invoiceObj.companyId=req.headers.company:null;
+    req.headers.currency?invoiceObj.currency=req.headers.currency:null;
+    req.headers.overseasagent?invoiceObj.party_Id=req.headers.overseasagent:null;
+    req.headers.jobtypes.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+    console.log(invoiceObj);
+    const result = await Invoice.findAll({
+      where:invoiceObj,
+      attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
+      include:[{
+        model:SE_Job,
+        include:[
+          {
+            model:Bl,
+            attributes:['hbl'],
+          },
+          {
+            model:SE_Equipments,
+            attributes:['qty', 'size']
+          }
+        ],
+        order: [[ 'createdAt', 'ASC' ]],
+        attributes:['id', 'fd', 'freightType'],
+      }]
+    });
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.get("/invoiceTest", async (req, res) => {
+  try {
+
+    const from = moment("2023-09-08");
+    const to   = moment("2023-09-10");
+    const result = await Invoice.findAll({
+      where:{
+        createdAt: {
+          [Op.gte]: from.toDate(),
+          [Op.lte]: to.toDate(),
+         }
+      },
+      order: [[ 'createdAt', 'ASC' ]]
+    });
+
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
 
 module.exports = routes;        

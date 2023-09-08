@@ -11660,7 +11660,6 @@ routes.post("/createClientInBulk", async(req, res) => {
     }
 
     try {
-        //console.log(obj[0])
         await obj.forEach(async(val, i)=>{
             let value = {...val};
             value.accountRepresentatorId = null;
