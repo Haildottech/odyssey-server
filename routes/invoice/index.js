@@ -601,4 +601,17 @@ routes.get("/invoiceTest", async (req, res) => {
   }
 });
 
+routes.get("/deleteAllInvoices", async (req, res) => {
+  try {
+    const result = await Voucher_Heads.destroy({
+      where:{
+      }
+    });
+
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
+
 module.exports = routes;        
