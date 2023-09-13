@@ -1,22 +1,20 @@
 const db = require("../../models");
 const routes = require('express').Router();
 const { Accounts } = require('../../models/');
-const { Op, QueryTypes } = require("sequelize");
+const { Op } = require("sequelize");
 const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
-
 const { Client_Associations } = require('../../functions/Associations/clientAssociation');
 const { Vendor_Associations, Vendors } = require('../../functions/Associations/vendorAssociations');
 const { Vouchers, Voucher_Heads } = require("../../functions/Associations/voucherAssociations");
 const { Clients } = require("../../functions/Associations/clientAssociation");
 const moment = require("moment");
-//Voucher Types
 
+//Voucher Types
 // (For Jobs)
 // Job Reciept 
 // Job Recievable 
 // Job Payment 
 // Job Payble 
-
 // (For Expense)
 // Expenses Payment 
 
@@ -2787,9 +2785,69 @@ routes.post("/accountDelete", async(req, res) => {
     res.json({status:'error', result:error});
   }
 });
+
+routes.post("/createOpeningBalances", async(req, res) => {
+
+  const setVoucherHeads = (id, heads) => {
+        let result = [];
+        heads.forEach((x) => {
+          result.push({
+            ...x,
+            VoucherId: id,
+            amount: `${x.amount}`,
+            createdAt:'2003-09-11 11:11:38.662+00',
+          });
+        });
+        return result;
+  };
+
+  try {
+    console.log(req.body);
+    const check = await Vouchers.findOne({
+        order:[["voucher_No","DESC"]],
+        attributes:["voucher_No"],
+        where:{ vType: req.body.vType}
+    });
+    const result = await Vouchers.create({
+        ...req.body,
+        CompanyId:req.body.companyId,
+        voucher_No: check == null ? 1 : parseInt(check.voucher_No) + 1,
+        voucher_Id: `${
+          req.body.companyId == 1 ?
+            "SNS" :
+          req.body.companyId == 2?
+            "CLS" : "ACS"
+        }-${req.body.vType}-${
+          check == null ? 1 : parseInt(check.voucher_No) + 1
+        }/${moment().format("YY")}`,
+        createdAt:'2003-09-11 11:11:38.662+00'
+    });
+    let dataz = await setVoucherHeads(result.id, req.body.Voucher_Heads);
+    await Voucher_Heads.bulkCreate(dataz);
+    res.json({status:'success', result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
+routes.get("/getOpeningBalances", async(req, res) => {
+    try {
+      const results = await Vouchers.findAll({
+        where: {
+           CompanyId : req.headers.id,
+           vType:"OP"
+        }
+      })
+      res.json({status:'success', result:results});
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
+  });
+
 routes.post("/accountVendorsAndAssociations", async(req, res) => {
   try {
-
     await Vendors.destroy({where:{}})
     await Vendor_Associations.destroy({where:{}})
     res.json({status:'success'});

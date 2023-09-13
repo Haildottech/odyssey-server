@@ -275,7 +275,6 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
           ]
         })
       } else if(req.headers.party=="agent"){
-        console.log("Inside Agent Association")
         partyAccount = await Vendor_Associations.findAll({
           where:{
             VendorId:result[0].party_Id,
@@ -294,7 +293,6 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
           ]
         })
       }else {
-        console.log("Inside Client Association")
         partyAccount = await Client_Associations.findAll({
           where:{ ClientId:result[0].party_Id, CompanyId:req.headers.companyid },
           include:[
@@ -320,22 +318,22 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
 
 routes.get("/dateExperiment", async(req, res) => {
   try {
-      const from = moment("2023-02-23");
-      const to = moment("2023-02-25");
-      const resultOne = await Invoice.findAll({
-        where:{
-          createdAt: {
-            [Op.gte]: from.toDate(),
-            [Op.lte]: to.toDate(),
-           }
-        },
-        order: [[ 'createdAt', 'ASC' ]]
-      });
-      res.json({status:'success', result:{ resultOne }});
-      }
-    catch (error) {
-      res.json({status:'error', result:error});
+    const from = moment("2023-02-23");
+    const to = moment("2023-02-25");
+    const resultOne = await Invoice.findAll({
+      where:{
+        createdAt: {
+          [Op.gte]: from.toDate(),
+          [Op.lte]: to.toDate(),
+          }
+      },
+      order: [[ 'createdAt', 'ASC' ]]
+    });
+    res.json({status:'success', result:{ resultOne }});
     }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.post("/createInvoiceTransaction", async(req, res) => {
@@ -604,10 +602,8 @@ routes.get("/invoiceTest", async (req, res) => {
 routes.get("/deleteAllInvoices", async (req, res) => {
   try {
     const result = await Voucher_Heads.destroy({
-      where:{
-      }
+      where:{}
     });
-
     await res.json({ status: "success", result: result });
   } catch (error) {
     res.json({ status: "error", result: error });
