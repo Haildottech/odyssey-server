@@ -3,6 +3,8 @@ const {
   Loading_Program, Delivery_Order, Item_Details, Dimensions
 } = require("../../functions/Associations/jobAssociations/seaExport");
 // const {Bl, Stamps} = require("../../functions/Associations/stamps")
+const { Charge_Head } = require("../../functions/Associations/incoiceAssociations");
+
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
 const { Clients } = require("../../functions/Associations/clientAssociation")
@@ -157,7 +159,7 @@ routes.get("/getValues", async(req, res) => {
 routes.post("/getNotes", async(req, res) => {
     try {
       const result = await Job_notes.findAll({
-        where:{type:"SE", recordId:req.body.id},
+        where:{type: req.body.type, recordId:req.body.id},
         order:[["createdAt", "DESC"]],
       });
       res.json({status:'success', result:result});
@@ -182,7 +184,8 @@ routes.get("/getAllNotes", async(req, res) => {
 
 routes.post('/updateNotes', async(req, res) => {
   try {
-    const result =  await Job_notes.update({opened : req.body.data.opened}, {where : {recordId : req.body.data.recordId}})
+    const result =  await Job_notes.update({opened : req.body.data.opened}, 
+    {where : {recordId : req.body.data.recordId}})
     res.json({ status: "success", result:result})
   }
   catch (err) {
@@ -192,7 +195,6 @@ routes.post('/updateNotes', async(req, res) => {
 
 routes.post("/addNote", async(req, res) => {
     try {
-        console.log(req.body)
         const result = await Job_notes.create(req.body);
         res.json({status:'success', result:result});
     }
@@ -620,66 +622,70 @@ routes.post("/upsertLoadingProgram", async(req, res) => {
 }); 
 
 routes.get("/getJobByValues", async (req, res) => {
-  let value = req.headers;
-  let obj = {
-    createdAt: {
-      [Op.gte]: moment(value.from).toDate(),
-      [Op.lte]: moment(value.to).add(1, 'days').toDate(),
+    let value = req.headers;
+    let obj = {
+      createdAt: {
+        [Op.gte]: moment(value.from).toDate(),
+        [Op.lte]: moment(value.to).add(1, 'days').toDate(),
+      }
+    };
+    let newObj = {};
+    if (value.client) {
+      obj.ClientId = value.client;
     }
-  };
-  let newObj = {};
-  if (value.client) {
-    obj.ClientId = value.client;
-  }
-  if (value.final_destination) {
-    obj.fd = value.final_destination;
-  }
-  if (value.shipping_air_line) {
-    obj.shippingLineId = value.shipping_air_line;
-  }
-  if (value.consignee) {
-    obj.consigneeId = value.consignee;
-  }
-  if (value.oversease_agent) {
-    obj.overseasAgentId = value.oversease_agent;
-  }
-  if (value.vessel) {
-    obj.vesselId = value.vessel;
-  }
-  if (value.clearing_agent) {
-    obj.customAgentId = value.clearing_agent;
-  }
-  if (value.vendor) {
-    obj.localVendorId = value.vendor;
-  }
-    if(value.air_line) {
-    obj.airLineId = value.air_line;
-  }
-  if(value.hbl) {
-    newObj.hbl = value.hbl;
-  }
-  if(value.mbl) {
-    newObj.mbl = value.mbl;
-  }
-  try {
-    const jobs = await SE_Job.findAll({
-      where: obj,
-      include:[
-        { model:Bl, where: newObj, include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]}]},
-        { model: Clients, attributes:   ["name"] },
-        { model: Vendors, attributes:   ["name"], as : "local_vendor"},
-        { model: Vendors, attributes:   ["name"], as : "shipping_line"},
-        { model: Vendors, attributes:   ["name"], as :"air_line"},
-        { model: Vessel , attributes:   ["name"], as :"vessel" },
-        { model: Commodity, attributes: ["name"], as :"commodity" },
-        { model: Employees, attributes: ["name"], as :"sales_representator" },
-        { model: Clients, attributes:   ["name"], as :"shipper" },
-        { model: Clients, attributes:   ["name"], as :"consignee" },
-    ]});
-    res.status(200).json({ result: jobs });
-  } catch (err) {
-    res.status(200).json({ result: err.message });
-  }
+    if (value.final_destination) {
+      obj.fd = value.final_destination;
+    }
+    if (value.shipping_air_line) {
+      obj.shippingLineId = value.shipping_air_line;
+    }
+    if (value.consignee) {
+      obj.consigneeId = value.consignee;
+    }
+    if (value.oversease_agent) {
+      obj.overseasAgentId = value.oversease_agent;
+    }
+    if (value.vessel) {
+      obj.vesselId = value.vessel;
+    }
+    if (value.clearing_agent) {
+      obj.customAgentId = value.clearing_agent;
+    }
+    if (value.vendor) {
+      obj.localVendorId = value.vendor;
+    }
+     if(value.air_line) {
+      obj.airLineId = value.air_line;
+    }
+    if(value.hbl) {
+      newObj.hbl = value.hbl;
+    }
+    if(value.mbl) {
+      newObj.mbl = value.mbl;
+    }
+    try {
+      const jobs = await SE_Job.findAll({
+        where: obj,
+        include:[
+          { model:Bl, where: newObj, 
+          include:[{model:Container_Info , attributes:["gross", 'net', "tare", "no"]},
+          {model:Item_Details , attributes:["grossWt", 'chargableWt', "rate_charge"]} 
+          ]},
+          { model: Clients, attributes:     ["name"] },
+          { model: Charge_Head, attributes: ["type", "amount"]},
+          { model: Vendors, attributes:     ["name"], as : "local_vendor"},
+          { model: Vendors, attributes:     ["name"], as : "shipping_line"},
+          { model: Vendors, attributes:     ["name"], as :"air_line"},
+          { model: Vessel , attributes:     ["name"], as :"vessel" },
+          { model: Commodity, attributes:   ["name"], as :"commodity" },
+          { model: Employees, attributes:   ["name"], as :"sales_representator" },
+          { model: Clients, attributes:     ["name"], as :"shipper" },
+          { model: Clients, attributes:     ["name"], as :"consignee" },
+      ]});
+      res.status(200).json({ result: jobs });
+    } catch (err) {
+      res.status(200).json({ result: err.message });
+    }
 });
 
 routes.get("/getValuesJobList", async (req, res) => {
@@ -851,4 +857,23 @@ routes.post("/upsertDeliveryOrder", async(req, res) => {
   }
 });
 
+
+routes.get("/getawb", async(req, res) => {
+  try {
+    const result = await SE_Job.findAll({
+      where: {[Op.or]: [
+        { operation: "AE" },
+        { operation: "AI" }
+      ]},
+      attributes:["jobNo", "operation", "id"],
+      include:[{
+        model:Bl,
+        attributes:["mbl"]
+      }]
+    })
+    res.status(200).json({ result: result });
+  } catch (err) {
+    res.status(200).json({ result: err.message });
+  }
+})
 module.exports = routes;
