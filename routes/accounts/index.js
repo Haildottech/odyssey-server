@@ -487,6 +487,30 @@ routes.get("/getByDate", async(req, res) => {
   }
 })
 
+routes.get("/getLedger", async(req, res) => {
+  try {
+    const result = await Voucher_Heads.findAll({
+        raw:true,
+        where:{ 
+            ChildAccountId:req.headers.id,
+            createdAt:{
+                [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+            }
+        },
+        attributes:['amount', 'type', 'createdAt'],
+        include:[{
+            model:Vouchers,
+            attributes:['voucher_Id'],
+        }],
+        order:[["createdAt","ASC"]],
+    })
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+})
+
 routes.get("/parentAccounts", async(req, res) => {
   try {
     const results = await Parent_Account.findAll({where: {CompanyId : req.headers.id}})
