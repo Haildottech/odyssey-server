@@ -497,7 +497,7 @@ routes.get("/getLedger", async(req, res) => {
                 [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
             }
         },
-        attributes:['amount', 'type', 'createdAt'],
+        attributes:['amount', 'type', 'narration', 'createdAt'],
         include:[{
             model:Vouchers,
             attributes:['voucher_Id'],

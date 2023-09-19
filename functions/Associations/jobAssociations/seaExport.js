@@ -1,14 +1,10 @@
-const { 
-    SE_Job, SE_Equipments, Commodity, Bl, Container_Info, Vessel, Job_notes, Stamps,
-    Loading_Program, Item_Details, Dimensions, Delivery_Order, Manifest, Manifest_Jobs
-} = require("../../../models");
+const { Loading_Program, Item_Details, Dimensions, Delivery_Order, Manifest, Manifest_Jobs,
+    SE_Job, SE_Equipments, Commodity, Bl, Container_Info, Vessel, Job_notes, Stamps } = require("../../../models");
 const { Employees } = require("../employeeAssociations");
-const { Vendors } = require("../vendorAssociations");
-const { Clients } = require("../clientAssociation");
-const { Voyage } = require("../vesselAssociations");
+const { Vendors   } = require("../vendorAssociations");
+const { Voyage    } = require("../vesselAssociations");
+const { Clients   } = require("../clientAssociation");
 const { DataTypes } = require('sequelize');
-
-// const {Stamps} = require("../../../models/Stamps");
 
 SE_Job.hasMany(SE_Equipments, {
     foriegnKey:{
@@ -106,7 +102,7 @@ Manifest.hasMany(Manifest_Jobs, {
         allowNull:false
     }
 })
-Manifest_Jobs.belongsTo(Manifest)
+Manifest_Jobs.belongsTo(Manifest);
 
 SE_Job.hasOne(Manifest_Jobs, {
     foriegnKey :{
@@ -114,25 +110,25 @@ SE_Job.hasOne(Manifest_Jobs, {
         allowNull:false
     }
 })
-Manifest_Jobs.belongsTo(SE_Job)
+Manifest_Jobs.belongsTo(SE_Job);
 
+SE_Job.belongsTo(Employees, {as:'sales_representator'});
 Bl.belongsTo(Clients,       {as:'notifyPartyOne'     });
 Bl.belongsTo(Clients,       {as:'notifyPartyTwo'     });
-SE_Job.belongsTo(Vessel,    {as:'vessel'             });
-SE_Job.belongsTo(Commodity, {as:'commodity'          });
-SE_Job.belongsTo(Employees, {as:'sales_representator'});
-SE_Job.belongsTo(Employees, {as:'created_by'         });
-SE_Job.belongsTo(Vendors,   {as:'forwarder'          });
-SE_Job.belongsTo(Vendors,   {as:'transporter'        });
-SE_Job.belongsTo(Vendors,   {as:'custom_agent'       });
-SE_Job.belongsTo(Vendors,   {as:'local_vendor'       });
 SE_Job.belongsTo(Vendors,   {as:'overseas_agent'     });
 SE_Job.belongsTo(Vendors,   {as:'shipping_line'      });
+SE_Job.belongsTo(Vendors,   {as:'local_vendor'       });
+SE_Job.belongsTo(Vendors,   {as:'custom_agent'       });
+SE_Job.belongsTo(Vendors,   {as:'transporter'        });
+SE_Job.belongsTo(Employees, {as:'created_by'         });
+SE_Job.belongsTo(Commodity, {as:'commodity'          });
+SE_Job.belongsTo(Clients,   {as:'consignee'          });
+SE_Job.belongsTo(Vendors,   {as:'forwarder'          });
 SE_Job.belongsTo(Vendors,   {as:'air_line'           });
 SE_Job.belongsTo(Clients,   {as:'shipper'            });
-SE_Job.belongsTo(Clients,   {as:'consignee'          });
+SE_Job.belongsTo(Vessel,    {as:'vessel'             });
 
 module.exports = { 
-    Loading_Program, Job_notes, Delivery_Order, Item_Details,
-    SE_Equipments, SE_Job, Bl, Container_Info, Stamps, Dimensions, Manifest, Manifest_Jobs
+    Loading_Program, Job_notes, Delivery_Order, Item_Details, SE_Equipments, SE_Job, Bl,
+    Container_Info, Stamps, Dimensions, Manifest, Manifest_Jobs
 }
