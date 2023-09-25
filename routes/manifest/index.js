@@ -1,8 +1,8 @@
 const {Manifest_Jobs, Manifest} = require('../../functions/Associations/jobAssociations/seaExport') 
 const routes = require('express').Router();
-// const Sequelize = require('sequelize');
+const Sequelize = require('sequelize');
 const moment = require("moment");
-
+const Op = Sequelize.Op;
 
 routes.post("/create", async(req, res) => {
     const createEquip = (list, id) => {
@@ -33,6 +33,7 @@ routes.post("/create", async(req, res) => {
       res.json({status:'error', result:error.message});
     }
 });
+
 routes.post("/edit", async(req, res) => {
 
     try {
@@ -62,13 +63,35 @@ routes.get('/get', async (req, res) =>{
 })
 
 routes.get('/getAll', async (req, res) =>{
-    try{
-    const result = await Manifest.findAll({})
+  try{
+  const result = await Manifest.findAll({
+    order: [[ 'createdAt', 'DESC' ]]
+  })
+  res.json({status:"success", result:result})        
+  }
+  catch (error) {
+  res.json({status:"error", result:error.message})        
+  }
+})
+
+routes.get('/searchJobs', async (req, res) => {
+  let obj = {
+    date: {
+      [Op.gte]: moment(req.headers.from).toDate(),
+      [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+    }
+  }
+  if(req.headers.flight){ obj.flight_no=req.headers.flight }
+  try{
+    const result = await Manifest.findAll({
+      where:obj,
+      order: [[ 'createdAt', 'ASC' ]]
+    })
     res.json({status:"success", result:result})        
-    }
-    catch (error) {
+  }
+  catch (error) {
     res.json({status:"error", result:error.message})        
-    }
+  }
 })
 
 module.exports = routes
