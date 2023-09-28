@@ -598,6 +598,18 @@ routes.get("/getStamps", async(req, res) => {
   }
 }); 
 
+routes.post("/deleteJob", async(req, res) => {
+  try {
+    const result = await SE_Job.destroy({
+      where:{id:req.body.id},
+    });
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+}); 
+
 routes.get("/getLoadingProgram", async(req, res) => {
   try {
     const result = await Loading_Program.findOne({
