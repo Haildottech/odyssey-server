@@ -63,14 +63,13 @@ routes.get('/get', async (req, res) =>{
 })
 
 routes.get('/getAll', async (req, res) =>{
-  try{
-  const result = await Manifest.findAll({
-    order: [[ 'createdAt', 'DESC' ]]
-  })
-  res.json({status:"success", result:result})        
-  }
-  catch (error) {
-  res.json({status:"error", result:error.message})        
+  try {
+    const result = await Manifest.findAll({
+      order: [[ 'createdAt', 'DESC' ]]
+    })
+    res.json({status:"success", result:result})        
+  } catch (error) {
+    res.json({status:"error", result:error.message})        
   }
 })
 

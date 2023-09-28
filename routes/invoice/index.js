@@ -317,6 +317,93 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
     }
 });
 
+routes.get("/getAllOldInoivcesByPartyId", async(req, res) => {
+  
+  try {
+    const result = await Invoice.findAll({
+      where:{
+        approved:"1",
+        party_Id:req.headers.id,
+        payType:req.headers.pay,
+        status:"2",
+        //...chardHeadLogic(req.headers.invoicecurrency)
+      },
+      attributes:['id','invoice_No', 'invoice_Id', 'recieved', 'paid', 'status', 'total', 'currency', 'roundOff', 'party_Id'],
+      order:[['invoice_Id', 'ASC']],
+      include:[
+        {
+          model:SE_Job,
+          attributes:['jobNo', 'subType']
+        },
+        {
+          model:Charge_Head,
+          attributes:['net_amount', 'local_amount', 'currency', 'ex_rate']
+        }
+      ]
+    });
+    let partyAccount = null;
+    if(result.length>0){
+      if(req.headers.party=="vendor"){
+        console.log("Inside Vendor Association")
+        partyAccount = await Vendor_Associations.findAll({
+          where:{
+            VendorId:result[0].party_Id,
+            CompanyId:req.headers.companyid  //<-- I'm Unsure About This 
+          },
+          include:[
+            {
+              model:Child_Account,
+              include:[
+                {
+                  model:Parent_Account,
+                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                }
+              ]
+            }
+          ]
+        })
+      } else if(req.headers.party=="agent"){
+        partyAccount = await Vendor_Associations.findAll({
+          where:{
+            VendorId:result[0].party_Id,
+            CompanyId:req.headers.companyid  //<-- I'm Unsure About This 
+          },
+          include:[
+            {
+              model:Child_Account,
+              include:[
+                {
+                  model:Parent_Account,
+                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                }
+              ]
+            }
+          ]
+        })
+      }else {
+        partyAccount = await Client_Associations.findAll({
+          where:{ ClientId:result[0].party_Id, CompanyId:req.headers.companyid },
+          include:[
+            {
+              model:Child_Account,
+              include:[
+                {
+                  model:Parent_Account,
+                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                }
+              ]
+            }
+          ]
+        });
+      }
+    }
+    res.json({ status:'success', result:result, account:partyAccount });
+    }
+    catch (error) {
+      res.json({status:'error', result:error});
+    }
+});
+
 routes.get("/dateExperiment", async(req, res) => {
   try {
     const from = moment("2023-02-23");
@@ -606,12 +693,12 @@ routes.get("/invoiceBalancing", async (req, res) => {
         [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
       },
       status:{ [Op.ne]: null },
+      payType:req.headers.paytype
     };
     req.headers.company?invoiceObj.companyId=req.headers.company:null;
     req.headers.currency?invoiceObj.currency=req.headers.currency:null;
     req.headers.overseasagent?invoiceObj.party_Id=req.headers.overseasagent:null;
     req.headers.jobtypes.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
-    console.log(invoiceObj);
     const result = await Invoice.findAll({
       where:invoiceObj,
       attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
