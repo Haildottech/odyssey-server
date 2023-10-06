@@ -23,6 +23,8 @@ routes.get(`/${url}/job`, async(req, res) => {
     req.headers.salesrepresentative?obj.salesRepresentatorId=req.headers.salesrepresentative:null;
     req.headers.client?obj.ClientId=req.headers.client:null;
     req.headers.overseasagent?obj.overseasAgentId=req.headers.overseasagent:null;
+    req.headers.jobtype?obj.operation=req.headers.jobtype.split(","):null;
+    console.log(req.headers.jobtype.split(","));
     const result = await SE_Job.findAll({
       attributes:['jobNo','fd', 'createdAt', 'jobType'],
       where:obj,

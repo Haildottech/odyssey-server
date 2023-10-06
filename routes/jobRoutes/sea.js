@@ -205,42 +205,41 @@ routes.post("/addNote", async(req, res) => {
 
 routes.post("/create", async(req, res) => {
 
-    const createEquip = (list, id) => {
-        let result = [];
-        list.forEach((x)=>{
-            if(x.size!=''&&x.qty!='', x.dg!='', x.teu!=''){
-                delete x.id
-                result.push({...x, SEJobId:id, teu:`${x.teu}`})
-            }
-        })
-        return result;
+  const createEquip = (list, id) => {
+    let result = [];
+    list.forEach((x) => {
+      if(x.size!=''&&x.qty!='', x.dg!='', x.teu!=''){
+        delete x.id
+        result.push({...x, SEJobId:id, teu:`${x.teu}`})
+      }
+    })
+    return result;
+  }
+  try {
+    let data = req.body.data
+    delete data.id
+    data.customCheck = data.customCheck.toString();
+    data.transportCheck = data.transportCheck.toString();
+    if(data.operation=="AE"||data.operation=="AI"){
+      data.vesselId = null
+    } else {
+      data.airLineId=null
     }
-
-    try {
-        let data = req.body.data
-        delete data.id
-        data.customCheck = data.customCheck.toString();
-        data.transportCheck = data.transportCheck.toString();
-        if(data.operation=="AE"||data.operation=="AI"){
-          data.vesselId = null
-        } else {
-          data.airLineId=null
-        }
-        const check = await SE_Job.findOne({
-          order:[['jobId','DESC']], attributes:["jobId"],
-          where:{operation:data.operation, companyId:data.companyId}
-        });
-        const result = await SE_Job.create({
-          ...data,
-          jobId:check==null?1:parseInt(check.jobId)+1,
-          jobNo:`${data.companyId=="1"?"SNS":data.companyId=="2"?"CLS":"ACS"}-${data.operation}${data.operation=="SE"?"J":data.operation=="SI"?"J":""}-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
-        }).catch((x)=>console.log(x.message))
-        await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
-        res.json({status:'success', result:await getJob(result.id)});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+    const check = await SE_Job.findOne({
+      order:[['jobId','DESC']], attributes:["jobId"],
+      where:{operation:data.operation, companyId:data.companyId}
+    });
+    const result = await SE_Job.create({
+      ...data,
+      jobId:check==null?1:parseInt(check.jobId)+1,
+      jobNo:`${data.companyId=="1"?"SNS":data.companyId=="2"?"CLS":"ACS"}-${data.operation}${data.operation=="SE"?"J":data.operation=="SI"?"J":""}-${check==null?1:parseInt(check.jobId)+1}/${moment().format("YY")}`
+    }).catch((x)=>console.log(x.message))
+    await SE_Equipments.bulkCreate(createEquip(data.equipments,  result.id)).catch((x)=>console.log(x))
+    res.json({status:'success', result:await getJob(result.id)});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.post("/edit", async(req, res) => {
@@ -887,5 +886,6 @@ routes.get("/getawb", async(req, res) => {
   } catch (err) {
     res.status(200).json({ result: err.message });
   }
-})
+});
+
 module.exports = routes;

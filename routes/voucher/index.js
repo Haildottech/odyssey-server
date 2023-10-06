@@ -12,7 +12,6 @@ const { Clients, Client_Associations } = require("../../functions/Associations/c
 const { Vendors, Vendor_Associations } = require("../../functions/Associations/vendorAssociations");
 const Op = Sequelize.Op;
 
-
 //Voucher Types
 // (For Jobs)
 // Job Reciept 
@@ -182,7 +181,6 @@ routes.get("/getAccountActivity", async (req, res) => {
   try {
     const { debitaccount, creditaccount } = req.headers;
     let obj = {};
-
     if (debitaccount != "" && creditaccount == "") {
       obj = { ChildAccountId: debitaccount, type: "debit" };
     } else if (debitaccount == "" && creditaccount != "") {

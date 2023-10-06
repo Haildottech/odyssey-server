@@ -117,7 +117,6 @@ routes.post("/editChildAccount", async(req, res) => {
     if(result){
       res.json({status:'exists', result:result});
     }else{
-      console.log(req.body)
       await Child_Account.update({title:title},{where:{id:id}})
       let val;
       val = await getAllAccounts(CompanyId);
@@ -141,15 +140,12 @@ routes.get("/getAllAccounts", async(req, res) => {
 });
 
 routes.get("/getAccountsForTransaction", async(req, res) => {
-    let obj = {};
-    let ChildObj = {};
-    console.log(req.headers.type)
-    if(req.headers.type=="Bank"){
+    let obj = { };
+    let ChildObj = { };
+    if(req.headers.type=="Bank") {
         ChildObj = {subCategory:'Bank'}
       } else if(req.headers.type=="Cash"){
       obj = {
-        CompanyId:parseInt(req.headers.companyid),
-        //title:req.headers.type
       }
       ChildObj = {subCategory:'Cash'}
     } else if(req.headers.type=='Adjust') {
@@ -181,17 +177,16 @@ routes.get("/getAccountsForTransaction", async(req, res) => {
         ChildObj = {subCategory:'General'}
     } else if(req.headers.type=='Taxes') {
         ChildObj = {subCategory:'General'}
-    } else if(req.headers.type=='Income'||'Selling Expense') {
+    } else if(req.headers.type=='Income' || 'Selling Expense') {
       obj = {
         title:req.headers.type,
         CompanyId:parseInt(req.headers.companyid),
       }
     }else {
-      obj = {title:req.headers.type} 
+      obj = { title:req.headers.type }
     }
 
     try {
-      //console.log(obj)
       const result = await Child_Account.findAll({
         where:ChildObj,
         include:[{
@@ -216,7 +211,7 @@ routes.get("/getAllChilds", async(req, res) => {
       attributes:["title", "id"],
       include:[{
         model:Parent_Account,
-        where:{CompanyId:req.headers.companyid},
+        //where:{CompanyId:req.headers.companyid},
         attributes:["title"]
       }]
     });

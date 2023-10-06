@@ -692,9 +692,11 @@ routes.get("/invoiceBalancing", async (req, res) => {
         [Op.gte]: moment(req.headers.from).toDate(),
         [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
       },
-      status:{ [Op.ne]: null },
-      payType:req.headers.paytype
+      status:{ [Op.ne]: null }
     };
+    if(req.headers.paytype!="All"){
+      invoiceObj.payType=req.headers.paytype
+    }
     req.headers.company?invoiceObj.companyId=req.headers.company:null;
     req.headers.currency?invoiceObj.currency=req.headers.currency:null;
     req.headers.overseasagent?invoiceObj.party_Id=req.headers.overseasagent:null;
