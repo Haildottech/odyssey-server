@@ -107,7 +107,7 @@ routes.post("/voucherCreation", async (req, res) => {
     const check = await Vouchers.findOne({
       order:[["voucher_No","DESC"]],
       attributes:["voucher_No"],
-      where:{ vType: req.body.vType}
+      where:{ vType: req.body.vType, CompanyId:req.body.CompanyId }
     });
     const result = await Vouchers.create({
       ...req.body,

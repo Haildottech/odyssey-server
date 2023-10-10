@@ -8,7 +8,7 @@ const { Client_Associations } = require("../../functions/Associations/clientAsso
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
 const { Voyage } = require('../../functions/Associations/vesselAssociations');
 const { Clients }=require("../../functions/Associations/clientAssociation");
-const { Accounts, Vessel } = require("../../models");
+const { Accounts, Vessel, Transaction } = require("../../models");
 const routes = require('express').Router();
 const Sequelize = require('sequelize');
 const moment = require("moment");
@@ -424,12 +424,38 @@ routes.get("/dateExperiment", async(req, res) => {
   }
 });
 
+routes.get("/getTransaction", async(req, res) => {
+  try {
+    let { history, offset, type } = req.headers;
+    const count = await Transaction.count({});
+    if (history=="false" & (type=="front" || type=="last")){
+      offset = count - 1;
+    } else if(history=="false" & (type=="first" || type=="back")){
+      offset = 0
+    }
+    const result = await Transaction.findAll({
+      limit:1, offset:offset, where:{}
+    })
+    let ids = result[0].dataValues.invoices.split(", ")
+    const invoices = await Invoice.findAll({
+      where:{id:ids},
+      include:[{model:SE_Job, attributes:['jobNo', 'subType']}]
+    })
+    
+    await res.json({status: 'success', result:{result:result[0], count, offset, invoices}});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+});
+
 routes.post("/createInvoiceTransaction", async(req, res) => {
   try {
     req.body.invoices.forEach(async(x)=>{
       await Invoice.update(x, {where:{id:x.id}});
     })
     await Invoice_Losses.bulkCreate(req.body.invoiceLosses);
+    await Transaction.create(req.body.transaction);
     await res.json({status: 'success', result: 'result'});
   }
   catch (error) {
@@ -622,7 +648,6 @@ routes.post("/makeInvoiceNew", async(req, res) => {
       })
     ]);
     res.json({status: 'success', result: charges});
-    
   }
   catch (error) {
     res.json({status: 'error', result: error});
