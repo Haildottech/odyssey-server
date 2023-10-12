@@ -62,6 +62,22 @@ routes.post(`/${url}/getBySearch`, async(req, res) => {
   }
 });
 
+routes.post(`/${url}/geInvoiceBalancing`, async(req, res) => {
+  console.log(req.body)
+  try {
+    const result = await SE_Job.findAll({
+      where:{
+        approved:'1'
+      }
+    })
+
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+});
+
 routes.post(`/${url}/getJobBalance`, async(req, res) => {
     try {
       let result;
@@ -90,7 +106,7 @@ routes.post(`/${url}/getJobBalance`, async(req, res) => {
           },
         ],
         }).catch((x)=>console.log(x));
-    }else{
+    } else {
       result = await SE_Job.findAll({
         attributes:['id', 'jobNo', 'subType', 'freightType', 'fd', 'vol', 'weight'],
         include:[
