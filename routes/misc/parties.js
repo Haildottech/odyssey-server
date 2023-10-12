@@ -119,18 +119,22 @@ routes.post(`/${url}/getJobBalance`, async(req, res) => {
 
 routes.post(`/${url}/getJobBalanceNew`, async(req, res) => {
   try {
+    console.log(req.body);
     let result;
+    let obj = {
+      party_Id:req.body.id,
+      status:{[Op.ne]:'0'},
+      createdAt: {
+        [Op.gte]: moment(req.body.from).toDate(),
+        [Op.lte]: moment(req.body.to).add(1, 'days').toDate(),
+      }
+    }
+    if(req.body.payType!="Both"){
+      obj.payType=req.body.payType
+    }
     if(req.body.type=="client"){
       result = await Invoice.findAll({
-        where:{
-          payType:req.body.payType,
-          party_Id:req.body.id,
-          status:{[Op.ne]:'0'},
-          createdAt: {
-            [Op.gte]: moment(req.body.from).toDate(),
-            [Op.lte]: moment(req.body.to).add(1, 'days').toDate(),
-          }
-        },
+        where:obj,
         attributes:['invoice_No', 'payType', 'status', 'createdAt', 'party_Name', 'paid', 'recieved', 'roundOff', 'total', 'ex_rate'],
         include:[
           {
