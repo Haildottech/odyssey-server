@@ -23,6 +23,9 @@ module.exports = (sequelize, DataTypes) => {
         settlement:{
             type:DataTypes.STRING
         },
+        accountType:{
+            type:DataTypes.STRING
+        },
     })
     return Voucher_Heads;
 }

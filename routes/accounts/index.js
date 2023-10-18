@@ -495,7 +495,7 @@ routes.get("/getLedger", async(req, res) => {
         attributes:['amount', 'type', 'narration', 'createdAt'],
         include:[{
             model:Vouchers,
-            attributes:['voucher_Id'],
+            attributes:['voucher_Id', 'id', 'type'],
         }],
         order:[["createdAt","ASC"]],
     })

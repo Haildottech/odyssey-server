@@ -64,11 +64,21 @@ routes.post(`/${url}/getBySearch`, async(req, res) => {
 
 routes.post(`/${url}/geInvoiceBalancing`, async(req, res) => {
   console.log(req.body)
+  let obj = {
+    approved:'true',
+    operation:req.body.filters.operation,
+    createdAt: {
+      [Op.gte]: moment(req.body.filters.from).toDate(),
+      [Op.lte]: moment(req.body.filters.to).add(1, 'days').toDate(),
+    }
+  }
   try {
-    const result = await SE_Job.findAll({
-      where:{
-        approved:'1'
-      }
+    const result = await Invoice.findAll({
+      where:{approved:"1"},
+      include:[{
+        model:SE_Job,
+        where:obj
+      }]
     })
 
     res.json({status:'success', result:result});

@@ -23201,7 +23201,6 @@ routes.post("/createNonglPartiesInBulk", async(req, res) => {
             "address2": " "
         }
     ];
-
     try {
         await parties.forEach(async(val, i)=>{
             let value = {...val};
@@ -23213,7 +23212,6 @@ routes.post("/createNonglPartiesInBulk", async(req, res) => {
             value.nongl                  = "1";
             await Clients.create({...value}).catch((x)=>console.log(x))
         });
-
         await res.json({status:'success'});
     }
     catch (error) {

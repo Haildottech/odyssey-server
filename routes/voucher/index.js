@@ -3,13 +3,15 @@ const {
   Voucher_Heads,
   Office_Vouchers
 } = require("../../functions/Associations/voucherAssociations");
-const { Child_Account } = require("../../functions/Associations/accountAssociations");
+const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
 const routes = require("express").Router();
 const Sequelize = require("sequelize");
 const moment = require("moment");
 const { Employees } = require("../../functions/Associations/employeeAssociations");
 const { Clients, Client_Associations } = require("../../functions/Associations/clientAssociation");
 const { Vendors, Vendor_Associations } = require("../../functions/Associations/vendorAssociations");
+const { Charge_Head, Invoice, Invoice_Transactions } = require("../../functions/Associations/incoiceAssociations");
+const { Accounts } = require('../../models/');
 const Op = Sequelize.Op;
 
 //Voucher Types
@@ -104,6 +106,7 @@ routes.get("/OfficeAllVouchers", async (req, res) => {
 
 routes.post("/voucherCreation", async (req, res) => {
   try {
+    console.log(req.body)
     const check = await Vouchers.findOne({
       order:[["voucher_No","DESC"]],
       attributes:["voucher_No"],
@@ -125,25 +128,17 @@ routes.post("/voucherCreation", async (req, res) => {
     await Voucher_Heads.bulkCreate(dataz);
     res.json({ status: "success", result:result });
   } catch (error) {
+    console.log(error)
     res.json({ status: "error", result: error });
   }
 });
 
 routes.post("/voucherEdit", async (req, res) => {
   try {
-
-    await Vouchers.update({
-      vType: req.body.vType, 
-      CompanyId: req.body.CompanyId, 
-      chequeDate: req.body.chequeDate, 
-      chequeNo: req.body.chequeNo, 
-      payTo: req.body.payTo, 
-      type: req.body.type, 
-      ChildAccountId: req.body.ChildAccountId
-    }, { where: { id: req.body.id } })
-
+    console.log(req.body)
+    await Vouchers.update({...req.body}, { where: { id: req.body.id } })
     req.body.Voucher_Heads.forEach(async(x) => {
-      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, defaultAmount : "-" });
+      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id });
     })
     await res.json({ status: "success"});
   } catch (error) {
@@ -200,9 +195,11 @@ routes.get("/getAccountActivity", async (req, res) => {
       include: [{ model: Vouchers }],
     });
     let items = [];
-    resultOne.forEach((x) => items.push(x.Voucher.voucher_Id));
+    resultOne.forEach((x) => {
+      items.push(x.dataValues.Voucher.voucher_Id)
+    });
+    
     let voucherIds = [...new Set(items)];
-
     const result = await Vouchers.findAll({
       attributes: ["voucher_Id", "currency", "exRate", "createdAt"],
       where: {
@@ -235,7 +232,30 @@ routes.get("/getAccountActivity", async (req, res) => {
 routes.get("/getAllVouchers", async (req, res) => {
   try {
     const result = await Vouchers.findAll({
+      where: {
+        [Op.and]:[
+          {type: {[Op.ne]:"Job Payment"} },
+          {type: {[Op.ne]:"Job Reciept"} },
+        ]
+      },
       order: [["createdAt", "DESC"]],
+    });
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.get("/getAllJobPayRecVouchers", async (req, res) => {
+  try {
+    const result = await Vouchers.findAll({
+      order: [["createdAt", "DESC"]],
+      where:{
+        [Op.or]: [
+          { type: "Job Reciept" },
+          { type: "Job Payment" },
+        ],
+      }
     });
     await res.json({ status: "success", result: result });
   } catch (error) {
@@ -254,6 +274,29 @@ routes.get("/getVoucherById", async (req, res) => {
     res.json({ status: "error", result: error });
   }
 });  
+
+routes.get("/getVoucherByIdAdvanced", async (req, res) => {
+  try {
+    const result = await Vouchers.findOne({
+      where: { id: req.headers.id },  
+      include: [{ 
+        model: Voucher_Heads,
+        include:[{
+          model:Child_Account,
+          include:[{
+            model:Parent_Account,
+            include:[{
+              model:Accounts
+            }]
+          }]
+        }]
+      }],  
+    });
+    await res.json({ status: "success", result: result});
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
 
 routes.get("/getVouchersByEmployeeId", async (req, res) => {
   try {

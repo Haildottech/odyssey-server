@@ -34,6 +34,7 @@ const {Vouchers, Voucher_Heads} = require('./functions/Associations/voucherAssoc
 const { Notifications } = require('./functions/Associations/NotificationAssociation');
 const { AssignTask } = require('./functions/Associations/taskAssociation');
 const { Voyage } = require('./functions/Associations/vesselAssociations');
+const { Invoice_Transactions } = require('./functions/Associations/incoiceAssociations');
 const { Non_Gl_Parties } = require('./models');
 
 app.use(morgan('tiny'));

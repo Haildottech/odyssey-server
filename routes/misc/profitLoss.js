@@ -1,5 +1,5 @@
 const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
-const { Invoice, Invoice_Losses } = require("../../functions/Associations/incoiceAssociations");
+const { Invoice, Invoice_Losses, Invoice_Transactions } = require("../../functions/Associations/incoiceAssociations");
 const {Vouchers,Voucher_Heads}=require("../../functions/Associations/voucherAssociations");
 const { SE_Job } = require("../../functions/Associations/jobAssociations/seaExport");
 const { Vendors } = require("../../functions/Associations/vendorAssociations");
@@ -14,17 +14,17 @@ const Op=Sequelize.Op;
 routes.get(`/${url}/job`, async(req, res) => {
   try {
     let obj = {};    
-    obj.approved ='true',
-    obj.companyId=req.headers.company,
-    obj.createdAt= {
-      [Op.gte]: moment(req.headers.from).toDate(),
-      [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
-    }
-    req.headers.salesrepresentative?obj.salesRepresentatorId=req.headers.salesrepresentative:null;
-    req.headers.client?obj.ClientId=req.headers.client:null;
-    req.headers.overseasagent?obj.overseasAgentId=req.headers.overseasagent:null;
-    req.headers.jobtype?obj.operation=req.headers.jobtype.split(","):null;
-    console.log(req.headers.jobtype.split(","));
+    // obj.approved ='true';
+    // obj.companyId=req.headers.company;
+    // obj.createdAt= {
+    //   [Op.gte]: moment(req.headers.from).toDate(),
+    //   [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+    // }
+    //req.headers.salesrepresentative?obj.salesRepresentatorId=req.headers.salesrepresentative:null;
+    //req.headers.client?obj.ClientId=req.headers.client:null;
+    //req.headers.overseasagent?obj.overseasAgentId=req.headers.overseasagent:null;
+    //req.headers.jobtype?obj.operation=req.headers.jobtype.split(","):null;
+    
     const result = await SE_Job.findAll({
       attributes:['jobNo','fd', 'createdAt', 'jobType'],
       where:obj,
@@ -36,7 +36,7 @@ routes.get(`/${url}/job`, async(req, res) => {
             approved:'1',
           },
           include:[{
-            model:Invoice_Losses
+            model:Invoice_Transactions
           }]
         },
         { model:Clients, attributes:['name'] },

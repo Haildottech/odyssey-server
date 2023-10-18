@@ -55,6 +55,30 @@ module.exports = (sequelize, DataTypes) => {
         invoice_Id:{
             type:DataTypes.STRING,
         },
+        invoices:{
+            type:DataTypes.TEXT,
+        },
+        drawnAt:{
+            type:DataTypes.STRING,
+        },
+        onAccount:{
+            type:DataTypes.STRING,
+        },
+        partyId:{
+            type:DataTypes.STRING,
+        },
+        partyName:{
+            type:DataTypes.STRING,
+        },
+        partyType:{
+            type:DataTypes.STRING,
+        },
+        tranDate:{
+            type:DataTypes.STRING,
+        },
+        subType:{
+            type:DataTypes.STRING,
+        },
     })
     return Vouchers;
 }
