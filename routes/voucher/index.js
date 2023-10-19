@@ -106,7 +106,6 @@ routes.get("/OfficeAllVouchers", async (req, res) => {
 
 routes.post("/voucherCreation", async (req, res) => {
   try {
-    console.log(req.body)
     const check = await Vouchers.findOne({
       order:[["voucher_No","DESC"]],
       attributes:["voucher_No"],
@@ -123,12 +122,12 @@ routes.post("/voucherCreation", async (req, res) => {
       }-${req.body.vType}-${
         check == null ? 1 : parseInt(check.voucher_No) + 1
       }/${moment().format("YY")}`,
-    });
+    }).catch((x)=>console.log(x))
     let dataz = await setVoucherHeads(result.id, req.body.Voucher_Heads);
     await Voucher_Heads.bulkCreate(dataz);
     res.json({ status: "success", result:result });
   } catch (error) {
-    console.log(error)
+    //console.log(error)
     res.json({ status: "error", result: error });
   }
 });
@@ -137,11 +136,13 @@ routes.post("/voucherEdit", async (req, res) => {
   try {
     console.log(req.body)
     await Vouchers.update({...req.body}, { where: { id: req.body.id } })
+    await Voucher_Heads.destroy({where:{VoucherId:req.body.id}})
     req.body.Voucher_Heads.forEach(async(x) => {
       await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id });
     })
     await res.json({ status: "success"});
   } catch (error) {
+    console.log(error)
     res.json({ status: "error", result: error });
   }
 });  
