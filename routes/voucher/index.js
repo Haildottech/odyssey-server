@@ -239,6 +239,11 @@ routes.get("/getAllVouchers", async (req, res) => {
           {type: {[Op.ne]:"Job Reciept"} },
         ]
       },
+      include:[{
+        model:Voucher_Heads,
+        attributes:['type', 'amount'],
+        where:{type:"debit"}
+      }],
       order: [["createdAt", "DESC"]],
     });
     await res.json({ status: "success", result: result });

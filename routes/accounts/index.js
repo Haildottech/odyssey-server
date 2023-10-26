@@ -492,10 +492,11 @@ routes.get("/getLedger", async(req, res) => {
                 [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
             }
         },
-        attributes:['amount', 'type', 'narration', 'createdAt'],
+        attributes:['amount', 'type', 'narration', 'createdAt', 'defaultAmount'],
         include:[{
             model:Vouchers,
-            attributes:['voucher_Id', 'id', 'type'],
+            attributes:['voucher_Id', 'id', 'type', 'currency', 'exRate'],
+            where:{currency:req.headers.currency}
         }],
         order:[["createdAt","ASC"]],
     })

@@ -29,53 +29,53 @@ const chardHeadLogic = (currency) => {
 }
 
 routes.post("/approveCharges", async(req, res) => {
-    try {
-      let tempIds = [];
-      req.body.forEach((x) => { tempIds.push(x.InvoiceId) });
+  try {
+    let tempIds = [];
+    req.body.forEach((x) => { tempIds.push(x.InvoiceId) });
 
-      const lastJB = await Invoice.findOne({ where:{type:'Job Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-      const lastJI = await Invoice.findOne({ where:{type:'Job Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-      const lastAI = await Invoice.findOne({ where:{type:'Agent Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
-      const lastAB = await Invoice.findOne({ where:{type:'Agent Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
+    const lastJB = await Invoice.findOne({ where:{type:'Job Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
+    const lastJI = await Invoice.findOne({ where:{type:'Job Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
+    const lastAI = await Invoice.findOne({ where:{type:'Agent Invoice'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
+    const lastAB = await Invoice.findOne({ where:{type:'Agent Bill'}, order: [[ 'invoice_Id', 'DESC' ]], attributes:["invoice_Id"]});
 
-      let result = await Invoice.findAll({where:{id:tempIds}});
-      let vouchers = [];
-      result.forEach(async(x, i) => {
-        if(x.status=='0' && x.type=='Job Bill'){
-          result[i].status="1"
-          result[i].invoice_Id= lastJB.invoice_Id==null?1: parseInt(lastJB.invoice_Id)+1;
-          result[i].invoice_No=lastJB.invoice_Id==null?
-          `SNS-JB-${1}/${moment().format("YY")}`:
-          `SNS-JB-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`
-        }
-        if(x.status=='0' && x.type=='Job Invoice'){
-          result[i].status="1"
-          result[i].invoice_Id= lastJI.invoice_Id==null?1: parseInt(lastJI.invoice_Id)+1;
-          result[i].invoice_No=lastJI.invoice_Id==null?
-          `SNS-JI-${1}/${moment().format("YY")}`:
-          `SNS-JI-${ parseInt(lastJI.invoice_Id)+1}/${moment().format("YY")}`
-        }
-        if(x.status=='0' && x.type=='Agent Invoice'){
-          result[i].status="1"
-          result[i].invoice_Id= lastAI.invoice_Id==null?1: parseInt(lastAI.invoice_Id)+1;
-          result[i].invoice_No=lastAI.invoice_Id==null?
-          `SNS-AI-${1}/${moment().format("YY")}`:
-          `SNS-AI-${ parseInt(lastAI.invoice_Id)+1}/${moment().format("YY")}`
-        }
-        if(x.status=='0' && x.type=='Agent Bill'){
-          result[i].status="1"
-          result[i].invoice_Id= lastAB.invoice_Id==null?1: parseInt(lastAB.invoice_Id)+1;
-          result[i].invoice_No=lastAB.invoice_Id==null?
-          `SNS-AB-${1}/${moment().format("YY")}`:
-          `SNS-AB-${ parseInt(lastAB.invoice_Id)+1}/${moment().format("YY")}`
-        }
-      })
+    let result = await Invoice.findAll({where:{id:tempIds}});
+    let vouchers = [];
+    result.forEach(async(x, i) => {
+      if(x.status=='0' && x.type=='Job Bill'){
+        result[i].status="1"
+        result[i].invoice_Id= lastJB.invoice_Id==null?1: parseInt(lastJB.invoice_Id)+1;
+        result[i].invoice_No=lastJB.invoice_Id==null?
+        `SNS-JB-${1}/${moment().format("YY")}`:
+        `SNS-JB-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`
+      }
+      if(x.status=='0' && x.type=='Job Invoice'){
+        result[i].status="1"
+        result[i].invoice_Id= lastJI.invoice_Id==null?1: parseInt(lastJI.invoice_Id)+1;
+        result[i].invoice_No=lastJI.invoice_Id==null?
+        `SNS-JI-${1}/${moment().format("YY")}`:
+        `SNS-JI-${ parseInt(lastJI.invoice_Id)+1}/${moment().format("YY")}`
+      }
+      if(x.status=='0' && x.type=='Agent Invoice'){
+        result[i].status="1"
+        result[i].invoice_Id= lastAI.invoice_Id==null?1: parseInt(lastAI.invoice_Id)+1;
+        result[i].invoice_No=lastAI.invoice_Id==null?
+        `SNS-AI-${1}/${moment().format("YY")}`:
+        `SNS-AI-${ parseInt(lastAI.invoice_Id)+1}/${moment().format("YY")}`
+      }
+      if(x.status=='0' && x.type=='Agent Bill'){
+        result[i].status="1"
+        result[i].invoice_Id= lastAB.invoice_Id==null?1: parseInt(lastAB.invoice_Id)+1;
+        result[i].invoice_No=lastAB.invoice_Id==null?
+        `SNS-AB-${1}/${moment().format("YY")}`:
+        `SNS-AB-${ parseInt(lastAB.invoice_Id)+1}/${moment().format("YY")}`
+      }
+    })
 
-      await res.json({status: 'success', result: result});
-    }
-    catch (error) {
-      res.json({status: 'error', result: error});
-    }
+    await res.json({status: 'success', result: result});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
 });
 
 routes.post("/updateCharges", async(req, res) => {
@@ -196,7 +196,7 @@ routes.get("/getInvoiceByNo", async(req, res) => {
           {
             model:SE_Job,
             attributes:[
-              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo'
+              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo', 'cwtClient', 'cwtLine'
             ],
             //attributes:['id'],
             include:[
@@ -243,7 +243,7 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
       obj.currency = req.headers.invoicecurrency
     }
     let transactionObj = [
-      { model:SE_Job,  attributes:['id', 'jobNo', 'subType'] },
+      { model:SE_Job,  attributes:['id', 'jobNo', 'subType'], where:{companyId:req.headers.companyid,} },
       { model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
     ];
     if(req.headers.edit=='true'){
@@ -719,14 +719,16 @@ routes.get('/testGetLastInvoice', async(req, res) => {
 
 routes.get("/invoiceBalancing", async (req, res) => {
   try {
-
-    let srObj = {};
     let invoiceObj = {
       createdAt: {
         [Op.gte]: moment(req.headers.from).toDate(),
         [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
       },
-      status:{ [Op.ne]: null }
+      status:{ [Op.ne]: null },
+      [Op.and]: [
+        { type: { [Op.ne]: "Job Invoice" } },
+        { type: { [Op.ne]: "Job Bill" } },
+      ]
     };
     if(req.headers.paytype!="All"){
       invoiceObj.payType=req.headers.paytype
@@ -734,7 +736,7 @@ routes.get("/invoiceBalancing", async (req, res) => {
     req.headers.company?invoiceObj.companyId=req.headers.company:null;
     req.headers.currency?invoiceObj.currency=req.headers.currency:null;
     req.headers.overseasagent?invoiceObj.party_Id=req.headers.overseasagent:null;
-    req.headers.jobtypes.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+    req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
     const result = await Invoice.findAll({
       where:invoiceObj,
       attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
@@ -756,6 +758,7 @@ routes.get("/invoiceBalancing", async (req, res) => {
     });
     await res.json({ status: "success", result: result });
   } catch (error) {
+    console.log(error)
     res.json({ status: "error", result: error });
   }
 });

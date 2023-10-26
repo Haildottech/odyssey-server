@@ -148,7 +148,7 @@ routes.post(`/${url}/getJobBalanceNew`, async(req, res) => {
     console.log(req.body);
     let result;
     let obj = {
-      party_Id:req.body.id,
+      //party_Id:req.body.id,
       status:{[Op.ne]:'0'},
       createdAt: {
         [Op.gte]: moment(req.body.from).toDate(),
