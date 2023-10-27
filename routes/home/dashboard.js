@@ -27,27 +27,69 @@ routes.get("/getDashboard", async(req, res) => {
 
     const projSales = await Invoice.findAll({ where:{payType:'Recievable', approved:'1'}, attributes:['total']});
 
-    const RecPayGraph = await Vouchers.findAll({
-        raw:true,
-        where:{type:'Job Reciept'},
-        attributes:['id', 'createdAt'],
-        include:[{
-            model:Invoice_Transactions,
-            attributes:['amount']
-        }]
-    })
-
     res.json({
-        status:'success', result:{
-            sns:{ snsFcl, snsLCL, snsPending },
-            acs:{ acsFcl, acsLCL, acsPending },
-            weekCount, monthCount, yearCount,
-            invocies:{
-                projSales,
-                RecPayGraph
-            }
+      status:'success', result:{
+        sns:{ snsFcl, snsLCL, snsPending },
+        acs:{ acsFcl, acsLCL, acsPending },
+        weekCount, monthCount, yearCount,
+        invocies:{
+          projSales
         }
+      }
     });
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+});
+
+routes.get("/getCashFlow", async(req, res) => {
+  try {
+    const cashflow = await Vouchers.findAll({
+      raw:true,
+      where:{type:'Job Reciept'},
+      attributes:['id', 'createdAt'],
+      include:[{
+        model:Invoice_Transactions,
+        attributes:['amount']
+      }]
+    });
+    const cashexpenditure = await Vouchers.findAll({
+      raw:true,
+      where:{type:'Job Payment'},
+      attributes:['id', 'createdAt'],
+      include:[{
+        model:Invoice_Transactions,
+        attributes:['amount']
+      }]
+    });
+    res.json({ status:'success', result:{
+      cashflow,
+      cashexpenditure
+    } });
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
+});
+
+routes.get("/getCashFlowTwo", async(req, res) => {
+  try {
+    const values = await Vouchers.findAll({
+      raw:true,
+      where:{
+        [Op.or]:[
+          { type:'Job Reciept' },
+          { type:'Job Payment' },
+        ]
+      },
+      attributes:['id', 'createdAt', 'type'],
+      include:[{
+        model:Invoice_Transactions,
+        attributes:['amount']
+      }]
+    });
+    res.json({ status:'success', result:values });
   }
   catch (error) {
     res.json({status: 'error', result: error});
