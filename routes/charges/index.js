@@ -16,7 +16,7 @@ routes.post("/create", async(req, res) => {
       // if(exists){
       //     res.json({status:'exists'});
       // } else {
-        const result = await Charges.create({...data, code: parseInt(check) + 1});
+        const result = await Charges.create({...data, code:check? parseInt(check) + 1:1});
         res.json({status:'success', result:result })
       // }
     }

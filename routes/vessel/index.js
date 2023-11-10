@@ -9,12 +9,12 @@ routes.post("/create", async(req, res) => {
     try {
       const value = req.body.data;
       const check = await Vessel.max("code")
-
-        const result = await Vessel.create({...value, code:parseInt(check) + 1});
-        res.json({status:'success', result:result});
-      
+      const result = await Vessel.create({...value, code:check? parseInt(check) + 1:1});
+      res.json({status:'success', result:result});
+    
     }
     catch (error) {
+      console.log(error)
       res.json({status:'error', result:error});
     }
 });

@@ -15,7 +15,8 @@ let sequelize;
 // } else {
 //   sequelize = new Sequelize(config.database, config.username, config.password, config);
 // }
-const connectionString = "postgresql://syed:BUHl5AOVYF_vNlqIBbJi2A@wet-boxer-2146.7s5.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
+//const connectionString = "postgresql://syed:BUHl5AOVYF_vNlqIBbJi2A@wet-boxer-2146.7s5.cockroachlabs.cloud:26257/defaultdb?sslmode=verify-full"
+const connectionString = "postgresql://abdullah:ckn3lCxxtBsWY-65nwfJGA@expert-flapper-2045.7s5.cockroachlabs.cloud:26257/tech_dc_test?sslmode=verify-full"
 sequelize = new Sequelize(connectionString, {
   dialectOptions: {
     application_name: "docs_simplecrud_node-sequelize"

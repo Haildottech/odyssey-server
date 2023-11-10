@@ -8716,41 +8716,6 @@ routes.get("/getForCharges", async(req, res) => {
     }
 });
 
-// routes.get("/getClientExperimental", async(req, res) => {
-//     try {
-//         const result = await Clients.findOne({
-//             attributes:['id', 'name'],
-//             include:[
-//                 {
-//                     model:Employees, as:"account_representator",
-//                     attributes:['id', 'name'],
-//                 },
-//                 {
-//                     model:Employees, as:"sales_representator",
-//                     attributes:['id', 'name'],
-//                 },
-//                 {
-//                     model:Employees, as:"doc_representator",
-//                     attributes:['id', 'name'],
-//                 },
-//                 {
-//                     model:Employees, as:"authorizedBy",
-//                     attributes:['id', 'name'],
-//                 },
-//                 {
-//                     model:Client_Associations,
-//                     attributes:['CompanyId', 'ParentAccountId', 'ChildAccountId'],
-//                 },
-//             ],
-//             where:{id:req.headers.id}
-//         });
-//         res.json({status:'success', result:result});
-//     }
-//     catch (error) {
-//       res.json({status:'error', result:error});
-//     }
-// });
-
 routes.post("/findAccounts", async(req, res) => {
     try {
         console.log(req.body);

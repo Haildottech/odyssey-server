@@ -26,7 +26,7 @@ const chardHeadLogic = (currency) => {
     result = { currency:currency }
   }
   return result;
-}
+};
 
 routes.post("/approveCharges", async(req, res) => {
   try {
@@ -231,8 +231,6 @@ routes.get("/getInvoiceByNo", async(req, res) => {
 routes.get("/getAllInoivcesByPartyId", async(req, res) => {
 
   try {
-    // let {id, pay, invoicecurrency, party, companyid } = req.headers
-    // console.log({id, pay, invoicecurrency, party, companyid})
     let obj = {
       approved:"1",
       party_Id:req.headers.id,
@@ -243,8 +241,8 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
       obj.currency = req.headers.invoicecurrency
     }
     let transactionObj = [
-      { model:SE_Job,  attributes:['id', 'jobNo', 'subType'], where:{companyId:req.headers.companyid,} },
-      { model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
+      //{ model:SE_Job,  attributes:['id', 'jobNo', 'subType'], where:{companyId:req.headers.companyid,} },
+      //{ model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
     ];
     if(req.headers.edit=='true'){
       obj.id = req.headers.invoices.split(", ")
@@ -279,7 +277,7 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
               include:[
                 {
                   model:Parent_Account,
-                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                  //where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
                 }
               ]
             }
@@ -298,7 +296,7 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
               include:[
                 {
                   model:Parent_Account,
-                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                  //where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
                 }
               ]
             }
@@ -307,14 +305,17 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
       }else {
         console.log("================Client HERE===================")
         partyAccount = await Client_Associations.findAll({
-          where:{ ClientId:result[0].party_Id, CompanyId:req.headers.companyid },
+          where:{ 
+            ClientId:result[0].party_Id, 
+            CompanyId:req.headers.companyid 
+          },
           include:[
             {
               model:Child_Account,
               include:[
                 {
                   model:Parent_Account,
-                  where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
+                  //where:{ title:req.headers.pay=="Recievable"?"ACCOUNT RECEIVABLE":"ACCOUNT PAYABLE" }
                 }
               ]
             }
@@ -564,7 +565,7 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
     partyType:x.partyType,
   }
   return result
-}
+};
 
 routes.post("/generateInvoice", async(req, res) => {
   try {
@@ -680,7 +681,7 @@ routes.get("/getInvoices", async(req, res) =>{
   catch (error) {
     res.json({status: 'error', result: error});
   }
-})
+});
 
 routes.get('/getTaskInvoices', async(req, res) => {
   try {
@@ -690,7 +691,7 @@ routes.get('/getTaskInvoices', async(req, res) => {
   catch (error) {
     res.json({status: 'error', result: error});
   }
-})
+});
 
 routes.get('/getCPUS', async(req, res) => {
   try {
@@ -700,7 +701,7 @@ routes.get('/getCPUS', async(req, res) => {
   catch (error) {
     res.json({status: 'error', result: error});
   }
-})
+});
 
 routes.get('/testGetLastInvoice', async(req, res) => {
   try {
@@ -715,7 +716,7 @@ routes.get('/testGetLastInvoice', async(req, res) => {
   catch (error) {
     res.json({status: 'error', result: error});
   }
-})
+});
 
 routes.get("/invoiceBalancing", async (req, res) => {
   try {
@@ -784,13 +785,34 @@ routes.get("/invoiceTest", async (req, res) => {
   }
 });
 
-routes.get("/deleteAllInvoices", async (req, res) => {
+routes.post("/uploadbulkInvoicesTest", async (req, res) => {
   try {
-    const result = await Voucher_Heads.destroy({
-      where:{}
-    });
-    await res.json({ status: "success", result: result });
+    const resultOne = await Clients.findOne({
+      where:{name:req.body.party_Name},
+      attributes:['id']
+    })
+    const resultTwo = await Vendors.findOne({
+      where:{name:req.body.party_Name},
+      attributes:['id']
+    })
+    await res.json({ status: "success", result: resultOne?resultOne.id:resultTwo.id });
   } catch (error) {
+    console.log(error);
+    console.log(req.body.party_Name);
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.post("/createBulkInvoices", async (req, res) => {
+  try {
+
+    await Invoice.bulkCreate(req.body)
+    .catch((x)=>{
+      console.log(x)
+    })
+    await res.json({ status: "success" });
+  } catch (error) {
+    console.log(error)
     res.json({ status: "error", result: error });
   }
 });

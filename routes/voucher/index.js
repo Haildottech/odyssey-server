@@ -1,8 +1,4 @@
-const { 
-  Vouchers,
-  Voucher_Heads,
-  Office_Vouchers
-} = require("../../functions/Associations/voucherAssociations");
+const { Vouchers, Voucher_Heads, Office_Vouchers } = require("../../functions/Associations/voucherAssociations");
 const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
 const routes = require("express").Router();
 const Sequelize = require("sequelize");
@@ -20,12 +16,13 @@ const Op = Sequelize.Op;
 // Job Recievable
 // Job Payment 
 // Job Payble
-// (For Expense)
-// Expenses Payment
-// Office_Vouchers
 // 0 Unpaid
 // 1 Fully-paid
 // 2 Half-paid
+
+// (For Expense)
+// Expenses Payment
+// Office_Vouchers
 
 const setVoucherHeads = (id, heads) => {
   let result = [];
@@ -123,23 +120,23 @@ routes.post("/voucherCreation", async (req, res) => {
         check == null ? 1 : parseInt(check.voucher_No) + 1
       }/${moment().format("YY")}`,
     }).catch((x)=>console.log(x))
+
     let dataz = await setVoucherHeads(result.id, req.body.Voucher_Heads);
     await Voucher_Heads.bulkCreate(dataz);
     res.json({ status: "success", result:result });
   } catch (error) {
-    //console.log(error)
+    console.log(error)
     res.json({ status: "error", result: error });
   }
 });
 
 routes.post("/voucherEdit", async (req, res) => {
   try {
-    console.log(req.body)
     await Vouchers.update({...req.body}, { where: { id: req.body.id } })
     await Voucher_Heads.destroy({where:{VoucherId:req.body.id}})
     req.body.Voucher_Heads.forEach(async(x) => {
-      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id });
-    })
+      await Voucher_Heads.upsert({ ...x, VoucherId: req.body.id, createdAt:req.body.createdAt });
+    });
     await res.json({ status: "success"});
   } catch (error) {
     console.log(error)
@@ -319,10 +316,74 @@ routes.post("/testDeleteVouchers", async (req, res) => {
   try {
 
     await Vouchers.destroy({where:{}})
+    await Voucher_Heads.destroy({where:{}})
     await res.json({ status: "success"});
   } catch (error) {
     res.json({ status: "error", result: error });
   }
-});  
+});
+
+routes.post("/getChildAccountIds", async (req, res) => {
+  let accountsList = req.body.list;
+  let newList = [];
+  try {
+    const childTwoTest = await Child_Account.findOne({
+      where:{title:"CONTRA ACCOUNT OPENINIG"},
+      attributes:['id', 'title'],
+      include:[{
+        model:Parent_Account,
+        where:{CompanyId:1},
+        attributes:['CompanyId', 'title']
+      }]
+    });
+    await accountsList.forEach(async(x, i)=>{
+      await Child_Account.findOne({
+        where:{title:x.title},
+        attributes:['id'],
+        include:[{
+          model:Parent_Account,
+          where:{CompanyId:req.body.company}
+        }]
+      }).then(async(y)=>{
+        newList.push({
+          "type":"Opening Balance",
+          "vType":"OP",
+          "currency":req.body.currency,
+          "exRate":"1",
+          "costCenter":"KHI",
+          "CompanyId": req.body.company,
+          Voucher_Heads:[
+            { 
+              title:"CONTRA ACCOUNT OPENINIG",
+              ChildAccountId:childTwoTest.id,
+              amount:x.amount,
+              type:x.type=="debit"?"debit":"credit",
+              defaultAmount:x.amount,
+            },
+            { 
+              title:x.title,
+              ChildAccountId:y.id,
+              amount:x.amount,
+              type:x.type=="debit"?"credit":"debit",
+              defaultAmount:x.amount,
+            },
+          ] 
+        })
+      })
+    });
+    const childTwo = await Child_Account.findOne({
+      where:{title:"CONTRA ACCOUNT OPENINIG"},
+      attributes:['id', 'title'],
+      include:[{
+        model:Parent_Account,
+        where:{CompanyId:1},
+        attributes:['CompanyId', 'title']
+      }]
+    });
+    res.json({ status: "success", result:{newList, childTwo}});
+  } catch (error) {
+    res.json({ status: "error" });
+  }
+});
 
 module.exports = routes;
