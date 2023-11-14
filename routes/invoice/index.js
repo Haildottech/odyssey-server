@@ -235,14 +235,18 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
       approved:"1",
       party_Id:req.headers.id,
       payType:req.headers.pay,
+      companyId:req.headers.companyid
       //...chardHeadLogic(req.headers.invoicecurrency)
     }
     if(req.headers.party=="agent"){
       obj.currency = req.headers.invoicecurrency
     }
     let transactionObj = [
-      //{ model:SE_Job,  attributes:['id', 'jobNo', 'subType'], where:{companyId:req.headers.companyid,} },
-      //{ model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
+      { 
+        model:SE_Job,  attributes:['id', 'jobNo', 'subType'], 
+        //where:{companyId:req.headers.companyid} 
+      },
+      { model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
     ];
     if(req.headers.edit=='true'){
       obj.id = req.headers.invoices.split(", ")
@@ -551,8 +555,8 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
   let company = '';
   company = companyId=='1'?"SNS":companyId=='2'?"CLS":"ACS";
   let result = {
-    invoice_No:lastJB==null?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`,
-    invoice_Id: lastJB==null?1: parseInt(lastJB.invoice_Id)+1,
+    invoice_No:lastJB.invoice_Id==null?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`,
+    invoice_Id: lastJB.invoice_Id==null?1: parseInt(lastJB.invoice_Id)+1,
     type:type,
     companyId:companyId,
     operation:operation,
@@ -564,7 +568,8 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
     ex_rate:x.ex_rate,
     partyType:x.partyType,
   }
-  return result
+  return result;
+  console.log(result)
 };
 
 routes.post("/generateInvoice", async(req, res) => {
@@ -620,28 +625,24 @@ routes.post("/makeInvoiceNew", async(req, res) => {
 
     await result.forEach(async(x)=>{
       if(x.invoiceType=="Job Bill"){
-        console.log("Job Bill")
         if(Object.keys(createdInvoice).length==0){
           createdInvoice = createInvoices(lastJB, "JB", "Job Bill", req.body.companyId, req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Job Invoice"){
-        console.log("Job Invoice")
         if(Object.keys(createdInvoice).length==0){
           createdInvoice = createInvoices(lastJI, "JI", "Job Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Invoice"){
-        console.log("Agent Invoice")
         if(Object.keys(createdInvoice).length==0){
           createdInvoice = createInvoices(lastAI, "AI", "Agent Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Bill"){
-        console.log("Agent Bill")
         if(Object.keys(createdInvoice).length==0){
           createdInvoice = createInvoices(lastAB, "AB", "Agent Bill", req.body.companyId,req.body.type, x)
         }
@@ -811,6 +812,27 @@ routes.post("/createBulkInvoices", async (req, res) => {
       console.log(x)
     })
     await res.json({ status: "success" });
+  } catch (error) {
+    console.log(error)
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.get("/getClientsWithACPayble", async (req, res) => {
+  try {
+    const result = await Clients.findAll({
+      include:[{
+        model:Client_Associations,
+        include:[{
+          model:Parent_Account,
+          where:{CompanyId:'1'}
+        }]
+      }]
+    })
+    .catch((x)=>{
+      console.log(x)
+    })
+    await res.json({ status: "success", result});
   } catch (error) {
     console.log(error)
     res.json({ status: "error", result: error });

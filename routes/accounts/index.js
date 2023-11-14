@@ -128,14 +128,14 @@ routes.post("/editChildAccount", async(req, res) => {
 });
 
 routes.get("/getAllAccounts", async(req, res) => {
-    try {
-      let result;
-      result = await getAllAccounts(req.headers.id);
-      res.json({status:'success', result:result});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  try {
+    let result;
+    result = await getAllAccounts(req.headers.id);
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.get("/getAccountsForTransaction", async(req, res) => {
@@ -275,6 +275,7 @@ routes.get("/getSEJobPartyChilds", async(req, res) => {
     res.json({status:'error', result:error});
   }
 });
+
 routes.get("/childForJobApproval", async(req, res) => {
   const clientObj = {
     model:Client_Associations,
@@ -642,26 +643,26 @@ routes.post("/createVendorInBulk", async(req, res) => {
     }
     let obj = req.body;
     try {
-        obj.forEach(async(x)=>{    
-            let accountCheck = await Parent_Account.findAll({
-                where:{title:x.account.parent},
-                attributes:['id', 'title', 'CompanyId'],
-                include:[{
-                    model:Child_Account,
-                    where:{title:x.account.account_title},
-                    attributes:['id', 'title'],
-                }]
-            })
-            let value = {...x};
-            value.accountRepresentatorId = null;
-            value.salesRepresentatorId   = null;
-            value.docRepresentatorId     = null;
-            value.authorizedById         = null;
-            value.createdBy              = "";
-            let result = await Vendors.create({...value});
-            Vendor_Associations.bulkCreate(createAccountList(accountCheck, result.dataValues.id))
-        });
-        await res.json({status:'success'});
+      obj.forEach(async(x)=>{    
+          let accountCheck = await Parent_Account.findAll({
+              where:{title:x.account.parent},
+              attributes:['id', 'title', 'CompanyId'],
+              include:[{
+                  model:Child_Account,
+                  where:{title:x.account.account_title},
+                  attributes:['id', 'title'],
+              }]
+          })
+          let value = {...x};
+          value.accountRepresentatorId = null;
+          value.salesRepresentatorId   = null;
+          value.docRepresentatorId     = null;
+          value.authorizedById         = null;
+          value.createdBy              = "";
+          let result = await Vendors.create({...value});
+          Vendor_Associations.bulkCreate(createAccountList(accountCheck, result.dataValues.id))
+      });
+      await res.json({status:'success'});
     }
     catch (error) {
       res.json({status:'error', result:error});
@@ -753,5 +754,21 @@ routes.get("/getOpeningBalances", async(req, res) => {
   }
 });
 
+routes.get("/getPartySetupAccounts", async(req, res) => {
+  try {
+    const parentAccounts = await Parent_Account.findAll({
+      attributes:['id', 'title'],
+      where:{ [Op.or]: [{AccountId: '3'}, {AccountId:'4'}], CompanyId:1},
+      include:[{
+        model:Child_Account,
+        attributes:['id', 'title']
+      }]
+    });
+    res.json({status:'success', result:parentAccounts});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
 
 module.exports = routes;
