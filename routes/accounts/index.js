@@ -7,6 +7,7 @@ const { Client_Associations, Clients } = require('../../functions/Associations/c
 const { Vendor_Associations, Vendors } = require('../../functions/Associations/vendorAssociations');
 const { Vouchers, Voucher_Heads } = require("../../functions/Associations/voucherAssociations");
 const moment = require("moment");
+const { Invoice } = require("../../functions/Associations/incoiceAssociations");
 
 //Voucher Types
 // (For Jobs)
@@ -590,44 +591,42 @@ routes.post("/testCreateClient", async(req, res) => {
 
 routes.post("/createClientInBulk", async(req, res) => {
 
-    const createAccountList = (parent, id) => {
-        let result = [];
-        parent.forEach((x)=>{
-            x.dataValues.Child_Accounts.forEach((y)=>{
-                result.push({ParentAccountId:x.id, ChildAccountId:y.dataValues.id, CompanyId:x.CompanyId, ClientId:id})
-            })
-        })
-        return result;
-    }
+  const createAccountList = (parent, id) => {
+    let result = [];
+    parent.forEach((x)=>{
+      x.dataValues.Child_Accounts.forEach((y)=>{
+        result.push({ParentAccountId:x.id, ChildAccountId:y.dataValues.id, CompanyId:x.CompanyId, ClientId:id})
+      })
+    })
+    return result;
+  }
 
-    let obj = req.body;
-    try {
-        obj.forEach(async(x)=>{
-            
-            let accountCheck = await Parent_Account.findAll({
-                where:{title:x.account.parent},
-                attributes:['id', 'title', 'CompanyId'],
-                include:[{
-                    model:Child_Account,
-                    where:{title:x.account.account_title},
-                    attributes:['id', 'title'],
-                }]
-            })
-            let value = {...x};
-            value.accountRepresentatorId = null;
-            value.salesRepresentatorId   = null;
-            value.docRepresentatorId     = null;
-            value.authorizedById         = null;
-            value.createdBy              = "";
-            let result = await Clients.create({...value});
-            Client_Associations.bulkCreate(createAccountList(accountCheck, result.dataValues.id))
-        })
-
-        await res.json({status:'success'});
-    }
-    catch (error) {
-      res.json({status:'error', result:error});
-    }
+  let obj = req.body;
+  try {
+    obj.forEach(async(x) => {
+      let accountCheck = await Parent_Account.findAll({
+        where:{title:x.account.parent},
+        attributes:['id', 'title', 'CompanyId'],
+        include:[{
+          model:Child_Account,
+          where:{title:x.account.account_title},
+          attributes:['id', 'title'],
+        }]
+      });
+      let value = {...x};
+      value.accountRepresentatorId = null;
+      value.salesRepresentatorId   = null;
+      value.docRepresentatorId     = null;
+      value.authorizedById         = null;
+      value.createdBy              = "";
+      let result = await Clients.create({...value});
+      Client_Associations.bulkCreate(createAccountList(accountCheck, result.dataValues.id));
+    })
+    await res.json({status:'success'});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
 });
 
 routes.post("/createVendorInBulk", async(req, res) => {
@@ -669,6 +668,44 @@ routes.post("/createVendorInBulk", async(req, res) => {
     }
 });
 
+routes.post("/nonGlInBulk", async(req, res) => {
+
+  let obj = req.body;
+  console.log(obj)
+  try {
+    obj.forEach(async(x)=>{
+      let value = {...x};
+      value.accountRepresentatorId = null;
+      value.salesRepresentatorId   = null;
+      value.docRepresentatorId     = null;
+      value.authorizedById         = null;
+      value.createdBy              = "";
+      await Clients.create({...value})
+      .then((x)=>{
+        console.log(x)
+      })
+    });
+    await res.json({status:'success'});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
+routes.post("/countAll", async(req, res) => {
+  try {
+    const clients = await Clients.count();
+    const vendors = await Vendors.count();
+    res.json({status:'success', result:{
+      clients,
+      vendors
+    }});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
 routes.post("/deleteAll", async(req, res) => {
   try {
     await Parent_Account.destroy({where:{}})
@@ -677,6 +714,17 @@ routes.post("/deleteAll", async(req, res) => {
     await Vendors.destroy({where:{}})
     await Client_Associations.destroy({where:{}})
     await Vendor_Associations.destroy({where:{}})
+    await Invoice.destroy({where:{}})
+    res.json({status:'success'});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
+routes.post("/deleteInvoices", async(req, res) => {
+  try {
+    await Invoice.destroy({where:{}})
     res.json({status:'success'});
   }
   catch (error) {

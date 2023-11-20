@@ -555,8 +555,8 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
   let company = '';
   company = companyId=='1'?"SNS":companyId=='2'?"CLS":"ACS";
   let result = {
-    invoice_No:lastJB.invoice_Id==null?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`,
-    invoice_Id: lastJB.invoice_Id==null?1: parseInt(lastJB.invoice_Id)+1,
+    invoice_No:(lastJB==null || lastJB.invoice_Id==null)?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`,
+    invoice_Id: (lastJB==null || lastJB.invoice_Id==null)?1: parseInt(lastJB.invoice_Id)+1,
     type:type,
     companyId:companyId,
     operation:operation,
@@ -569,51 +569,50 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
     partyType:x.partyType,
   }
   return result;
-  console.log(result)
 };
 
-routes.post("/generateInvoice", async(req, res) => {
-  try {
-    let result = req.body.chargeList, createdInvoice = [];
-    const [JB, JI, AI, AB] = [
-      await Invoice.findOne({where:{type:'Job Bill'},      order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-      await Invoice.findOne({where:{type:'Job Invoice'},   order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-      await Invoice.findOne({where:{type:'Agent Invoice'}, order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-      await Invoice.findOne({where:{type:'Agent Bill'},    order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-    ];
-    await result.forEach(async (x) => {
-      if(x.invoiceType=="Job Bill") {
-        createdInvoice = createInvoices(JB,"JB","Job Bill", req.body.companyId, req.body.type, x);
-        charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-      }
-      if(x.invoiceType=="Job Invoice") {
-        createdInvoice = createInvoices(JI,"JI","Job Invoice", req.body.companyId,req.body.type, x);
-        charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-      }
-      if(x.invoiceType=="Agent Invoice") {
-        createdInvoice = createInvoices(AI,"AI","Agent Invoice", req.body.companyId,req.body.type, x);
-        charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-      }
-      if(x.invoiceType=="Agent Bill") {
-        createdInvoice = createInvoices(AB,"AB","Agent Bill", req.body.companyId,req.body.type, x);
-        charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-      }
-    });
-    // const newInv = await Invoice.create(createdInvoice);
-    // charges = await charges.map((x)=>{
-    //   return{ ...x, InvoiceId:newInv.id }
-    // })
-    // await Promise.all([
-    //   charges.forEach((x) => {
-    //     Charge_Head.upsert(x);
-    //   })
-    // ]);
-    res.json({status: 'success'});
-  }
-  catch (error) {
-    res.json({status: 'error', result: error});
-  }
-});
+// routes.post("/generateInvoice", async(req, res) => {
+//   try {
+//     let result = req.body.chargeList, createdInvoice = [];
+//     const [JB, JI, AI, AB] = [
+//       await Invoice.findOne({where:{type:'Job Bill'},      order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
+//       await Invoice.findOne({where:{type:'Job Invoice'},   order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
+//       await Invoice.findOne({where:{type:'Agent Invoice'}, order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
+//       await Invoice.findOne({where:{type:'Agent Bill'},    order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
+//     ];
+//     await result.forEach(async (x) => {
+//       if(x.invoiceType=="Job Bill") {
+//         createdInvoice = createInvoices(JB,"JB","Job Bill", req.body.companyId, req.body.type, x);
+//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
+//       }
+//       if(x.invoiceType=="Job Invoice") {
+//         createdInvoice = createInvoices(JI,"JI","Job Invoice", req.body.companyId,req.body.type, x);
+//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
+//       }
+//       if(x.invoiceType=="Agent Invoice") {
+//         createdInvoice = createInvoices(AI,"AI","Agent Invoice", req.body.companyId,req.body.type, x);
+//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
+//       }
+//       if(x.invoiceType=="Agent Bill") {
+//         createdInvoice = createInvoices(AB,"AB","Agent Bill", req.body.companyId,req.body.type, x);
+//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
+//       }
+//     });
+//     // const newInv = await Invoice.create(createdInvoice);
+//     // charges = await charges.map((x)=>{
+//     //   return{ ...x, InvoiceId:newInv.id }
+//     // })
+//     // await Promise.all([
+//     //   charges.forEach((x) => {
+//     //     Charge_Head.upsert(x);
+//     //   })
+//     // ]);
+//     res.json({status: 'success'});
+//   }
+//   catch (error) {
+//     res.json({status: 'error', result: error});
+//   }
+// });
 
 routes.post("/makeInvoiceNew", async(req, res) => {
   try {
@@ -757,6 +756,61 @@ routes.get("/invoiceBalancing", async (req, res) => {
         order: [[ 'createdAt', 'ASC' ]],
         attributes:['id', 'fd', 'freightType'],
       }]
+    });
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    console.log(error)
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.get("/jobBalancing", async (req, res) => {
+  try {
+    let invoiceObj = {
+      createdAt: {
+        [Op.gte]: moment(req.headers.from).toDate(),
+        [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+      },
+      status:{ [Op.ne]: null },
+      [Op.and]: [
+        { type: { [Op.ne]: "Agent Invoice" } },
+        { type: { [Op.ne]: "Old Agent Invoice" } },
+        { type: { [Op.ne]: "Agent Bill" } },
+        { type: { [Op.ne]: "Old Agent Bill" } },
+      ]
+    };
+    if(req.headers.paytype!="All"){
+      invoiceObj.payType=req.headers.paytype
+    }
+    console.log(req.headers.party)
+    req.headers.party?invoiceObj.party_Id=req.headers.party:null;
+    req.headers.company?invoiceObj.companyId=req.headers.company:null;
+    req.headers.currency?invoiceObj.currency=req.headers.currency:null;
+    
+    req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+
+    let includeObj = {
+      model:SE_Job,
+      include:[
+        {
+          model:Bl,
+          attributes:['hbl'],
+        },
+        {
+          model:SE_Equipments,
+          attributes:['qty', 'size']
+        }
+      ],
+      order: [[ 'createdAt', 'ASC' ]],
+      attributes:['id', 'fd', 'freightType'],
+    }
+
+    req.headers.overseasagent?includeObj.where = {overseasAgentId:req.headers.overseasagent}:null;
+
+    const result = await Invoice.findAll({
+      where:invoiceObj,
+      attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
+      include:[includeObj]
     });
     await res.json({ status: "success", result: result });
   } catch (error) {

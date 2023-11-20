@@ -54,8 +54,8 @@ routes.post("/create", async(req, res) => {
         await Vendor_Associations.bulkCreate(createAccountList(accounts, accountsList, result.id)).catch((x)=>console.log(x))
         res.json({
             status:'success', 
-            accountsList
-            //result:result
+            accountsList,
+            result:result
         });
     }
     catch (error) {
@@ -71,7 +71,7 @@ routes.post("/edit", async(req, res) => {
         value.operations = value.operations.join(', ');
         value.types = value.types.join(', ');
         await Vendors.update({...value, code: parseInt(value.code)},{where:{id:value.id}})
-        console.log(req.body.pAccountName);
+        // console.log(req.body.pAccountName);
         const pAccountList = await Parent_Account.findAll({
             where:{title:req.body.pAccountName}
         })

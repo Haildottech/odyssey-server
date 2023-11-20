@@ -33,7 +33,6 @@ routes.post("/createClient", async(req, res) => {
         return result;
     }
     try {
-        console.log(req.body.pAccountName)
         let value = req.body;
         value.operations = value.operations.join(', ');
         value.types = value.types.join(', ');
@@ -149,13 +148,12 @@ routes.post("/editClient", async(req, res) => {
             where:{ClientId:value.id},
         });
         clientAssociation.forEach(async(x)=>{
-            //console.log(x.CompanyId);
             ids.push(x.ChildAccountId);
             let tempChildId = pAccountList.find((y)=>y.CompanyId==x.CompanyId).id
             await Client_Associations.update({ParentAccountId:tempChildId}, {where:{id:x.id}})
         });
         await Child_Account.update({ title:value.name }, { where:{ id:ids } });
-        res.json({status:'success'})
+        res.json({status:'success'});
     }
     catch (error) {
       res.json({status:'error', result:error});
