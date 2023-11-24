@@ -246,7 +246,7 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
         model:SE_Job,  attributes:['id', 'jobNo', 'subType'], 
         //where:{companyId:req.headers.companyid} 
       },
-      { model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
+      //{ model:Charge_Head, attributes:['net_amount', 'local_amount', 'currency', 'ex_rate'] }
     ];
     if(req.headers.edit=='true'){
       obj.id = req.headers.invoices.split(", ")
@@ -262,7 +262,7 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
     }
     const result = await Invoice.findAll({
       where:obj,
-      attributes:['id','invoice_No', 'invoice_Id', 'recieved', 'paid', 'status', 'total', 'currency', 'roundOff', 'party_Id', 'operation'],
+      attributes:['id','invoice_No', 'invoice_Id', 'recieved', 'paid', 'status', 'total', 'currency', 'roundOff', 'party_Id', 'operation', 'ex_rate'],
       order:[['invoice_Id', 'ASC']],
       include:transactionObj
     });
@@ -728,16 +728,21 @@ routes.get("/invoiceBalancing", async (req, res) => {
       status:{ [Op.ne]: null },
       [Op.and]: [
         { type: { [Op.ne]: "Job Invoice" } },
+        { type: { [Op.ne]: "Old Job Invoice" } },
         { type: { [Op.ne]: "Job Bill" } },
+        { type: { [Op.ne]: "Old Job Bill" } },
       ]
     };
     if(req.headers.paytype!="All"){
       invoiceObj.payType=req.headers.paytype
     }
-    req.headers.company?invoiceObj.companyId=req.headers.company:null;
-    req.headers.currency?invoiceObj.currency=req.headers.currency:null;
-    req.headers.overseasagent?invoiceObj.party_Id=req.headers.overseasagent:null;
-    req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+
+    // req.headers.company?invoiceObj.companyId=req.headers.company:null;
+    // req.headers.currency?invoiceObj.currency=req.headers.currency:null;
+    // req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+    
+    (req.headers.overseasagent!=''&&req.headers.overseasagent!=null)?invoiceObj.party_Id=req.headers.overseasagent:null;
+    console.log(invoiceObj)
     const result = await Invoice.findAll({
       where:invoiceObj,
       attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],

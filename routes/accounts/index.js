@@ -1,13 +1,13 @@
+const moment = require("moment");
 const db = require("../../models");
+const { Op } = require("sequelize");
 const routes = require('express').Router();
 const { Accounts } = require('../../models/');
-const { Op } = require("sequelize");
-const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
+const { Invoice } = require("../../functions/Associations/incoiceAssociations");
+const { Vouchers, Voucher_Heads } = require("../../functions/Associations/voucherAssociations");
 const { Client_Associations, Clients } = require('../../functions/Associations/clientAssociation');
 const { Vendor_Associations, Vendors } = require('../../functions/Associations/vendorAssociations');
-const { Vouchers, Voucher_Heads } = require("../../functions/Associations/voucherAssociations");
-const moment = require("moment");
-const { Invoice } = require("../../functions/Associations/incoiceAssociations");
+const { Child_Account, Parent_Account } = require("../../functions/Associations/accountAssociations");
 
 //Voucher Types
 // (For Jobs)
@@ -724,8 +724,22 @@ routes.post("/deleteAll", async(req, res) => {
 
 routes.post("/deleteInvoices", async(req, res) => {
   try {
-    await Invoice.destroy({where:{}})
+    await Invoice.destroy({
+      where:{type:'Old Agent Bill'}
+    })
     res.json({status:'success'});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
+routes.post("/countInvoices", async(req, res) => {
+  try {
+    const result = await Invoice.count({
+      //where:{type:'Agent Bill'}
+    })
+    res.json({status:'success', result});
   }
   catch (error) {
     res.json({status:'error', result:error});
