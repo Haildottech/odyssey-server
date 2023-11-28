@@ -30,12 +30,12 @@ const authRoutes = require('./routes/auth/');
 
 const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes, Delivery_Order, Item_Details, Manifest, Manifest_Jobs } = require('./functions/Associations/jobAssociations/seaExport');
 const { Vendors, Vendor_Associations } = require('./functions/Associations/vendorAssociations');
-const {Clients, Client_Associations} = require('./functions/Associations/clientAssociation');
-const {Vouchers, Voucher_Heads} = require('./functions/Associations/voucherAssociations');
+const { Clients, Client_Associations } = require('./functions/Associations/clientAssociation');
+const { Vouchers, Voucher_Heads } = require('./functions/Associations/voucherAssociations');
+const { Invoice_Transactions } = require('./functions/Associations/incoiceAssociations');
 const { Notifications } = require('./functions/Associations/NotificationAssociation');
 const { AssignTask } = require('./functions/Associations/taskAssociation');
 const { Voyage } = require('./functions/Associations/vesselAssociations');
-const { Invoice_Transactions } = require('./functions/Associations/incoiceAssociations');
 const { Non_Gl_Parties } = require('./models');
 
 app.use(morgan('tiny'));
@@ -46,10 +46,13 @@ app.use(bodyParser.json({limit: '100mb', extended: true}));
 app.use(express.json());
 db.sequelize.sync();
 
-app.get("/", (req, res) => { res.json('Welcome To Odyssey Server in Hail Dot Tech') });
 //app.get("/getUser", verify, (req, res) => {res.json({isLoggedIn:true,username:req.body.username})});
+app.get("/", (req, res) => { res.json('Welcome To Odyssey Server in Hail Dot Tech') });
 app.use("/home", homeAccountRoutes, homeOperationsRoutes, homeDashboardRoutes);
+app.use("/misc", miscPartiesRoutes, miscProfitLossRoutes);
+app.use("/notifications", notificationRoutes);
 app.use("/employeeRoutes", employeeRoutes);
+app.use("/nonGlParties", nonGlParties);
 app.use("/clientRoutes", clientRoutes);
 app.use("/commodity", commodityRoutes);
 app.use("/companies", companyRoutes);
@@ -58,17 +61,14 @@ app.use("/authRoutes", authRoutes);
 app.use("/history", historyRoutes);
 app.use("/charges", chargesRoutes);
 app.use("/invoice", invoiceRoutes);
+app.use("/voucher", voucherRoutes);
 app.use("/vessel", vesselRoutes);
 app.use("/vendor", vendorRoutes);
 app.use("/seaJob", seaJobRoutes);
-app.use("/voucher", voucherRoutes);
-app.use("/notifications", notificationRoutes);
-app.use("/misc", miscPartiesRoutes, miscProfitLossRoutes);
 app.use("/tasks", assignedTasks);
-app.use("/nonGlParties", nonGlParties);
 app.use("/manifest", manifest );
 
 // abdullah added a new feature
-const PORT = process.env.PORT || 8081; 
+const PORT = process.env.PORT || 8082; 
 
 app.listen(PORT, () => { console.log(`App listenings on port ${PORT}`) });

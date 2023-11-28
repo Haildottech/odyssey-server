@@ -277,9 +277,9 @@ routes.get("/get", async(req, res) => {
             operation:req.headers.operation
         },
         include:[
-            {model:Voyage},
+            //{model:Voyage},
             {model:Employees, as:'created_by', attributes:['name'] },
-            {model:SE_Equipments},
+            //{model:SE_Equipments},
             {
                 model:Clients,
                 attributes:['name']
@@ -364,7 +364,7 @@ routes.get("/getJobsWithoutBl", async(req, res) => {
         'shipDate', 'cutOffDate',
         'delivery', 'freightType',
         'operation', 'flightNo','VoyageId',
-        'cwtLine', 'cwtClient'
+        'cwtLine', 'cwtClient', 'weight', 'pcs'
       ],
       order:[["createdAt", "DESC"]],
       include:[

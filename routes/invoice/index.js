@@ -196,7 +196,7 @@ routes.get("/getInvoiceByNo", async(req, res) => {
           {
             model:SE_Job,
             attributes:[
-              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo', 'cwtClient', 'cwtLine'
+              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo', 'cwtClient', 'cwtLine', 'departureDate'
             ],
             //attributes:['id'],
             include:[
@@ -495,7 +495,7 @@ routes.post("/invApproveDisapp", async(req, res) => {
 
 routes.post("/addInvoiceNote", async(req, res) => {
   try {
-    await Invoice.update({ note:req.body.note}, { where:{id:req.body.id} });
+    await Invoice.update({ note:req.body.note, currency:req.body.currency}, { where:{id:req.body.id} });
     await res.json({status: 'success', result: 'result'});
   }
   catch (error) {
@@ -521,6 +521,26 @@ routes.post("/saveChargeHeades", async(req, res) => {
 
 routes.post("/saveHeadesNew", async(req, res) => {
   try {
+    // let deletingInvoices = [];
+    // console.log(req.body.deleteList);
+    // const deletes = await Charge_Head.findAll({
+    //   attributes:['id'],
+    //   where:{id:req.body.deleteList},
+    //   include:[{
+    //     model:Invoice,
+    //     include:[{
+    //       model:Charge_Head,
+    //       attributes:['id']
+    //     }]
+    //   }]
+    // })
+    // deletes.forEach((x)=>{
+    //   console.log(x.Invoice.invoice_No)
+    //   x.Invoice.Charge_Heads.forEach((y)=>{
+    //     console.log(y.id)
+    //   })
+    // })
+
     await Charge_Head.destroy({where:{id:req.body.deleteList}})
     await SE_Job.update({exRate:req.body.exRate}, {where:{id:req.body.id}})
     const start = await Date.now();
@@ -553,10 +573,15 @@ routes.get("/getHeadesNew", async(req, res) => {
 
 const createInvoices = (lastJB, init, type, companyId, operation, x) => {
   let company = '';
+  let inVoiceDeleteList = []
+  if(lastJB.Charge_Heads.length==0){
+    inVoiceDeleteList.push(lastJB.id)
+  }
+  let addition = lastJB.Charge_Heads.length==0?0:1;
   company = companyId=='1'?"SNS":companyId=='2'?"CLS":"ACS";
   let result = {
-    invoice_No:(lastJB==null || lastJB.invoice_Id==null)?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${ parseInt(lastJB.invoice_Id)+1}/${moment().format("YY")}`,
-    invoice_Id: (lastJB==null || lastJB.invoice_Id==null)?1: parseInt(lastJB.invoice_Id)+1,
+    invoice_No:(lastJB==null || lastJB.invoice_Id==null)?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${parseInt(lastJB.invoice_Id)+parseInt(addition)}/${moment().format("YY")}`,
+    invoice_Id: (lastJB==null || lastJB.invoice_Id==null)?1: parseInt(lastJB.invoice_Id)+parseInt(addition),
     type:type,
     companyId:companyId,
     operation:operation,
@@ -568,59 +593,17 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
     ex_rate:x.ex_rate,
     partyType:x.partyType,
   }
+  Invoice.destroy({where:{id:inVoiceDeleteList}})
   return result;
 };
-
-// routes.post("/generateInvoice", async(req, res) => {
-//   try {
-//     let result = req.body.chargeList, createdInvoice = [];
-//     const [JB, JI, AI, AB] = [
-//       await Invoice.findOne({where:{type:'Job Bill'},      order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-//       await Invoice.findOne({where:{type:'Job Invoice'},   order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-//       await Invoice.findOne({where:{type:'Agent Invoice'}, order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-//       await Invoice.findOne({where:{type:'Agent Bill'},    order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]}),
-//     ];
-//     await result.forEach(async (x) => {
-//       if(x.invoiceType=="Job Bill") {
-//         createdInvoice = createInvoices(JB,"JB","Job Bill", req.body.companyId, req.body.type, x);
-//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-//       }
-//       if(x.invoiceType=="Job Invoice") {
-//         createdInvoice = createInvoices(JI,"JI","Job Invoice", req.body.companyId,req.body.type, x);
-//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-//       }
-//       if(x.invoiceType=="Agent Invoice") {
-//         createdInvoice = createInvoices(AI,"AI","Agent Invoice", req.body.companyId,req.body.type, x);
-//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-//       }
-//       if(x.invoiceType=="Agent Bill") {
-//         createdInvoice = createInvoices(AB,"AB","Agent Bill", req.body.companyId,req.body.type, x);
-//         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No });
-//       }
-//     });
-//     // const newInv = await Invoice.create(createdInvoice);
-//     // charges = await charges.map((x)=>{
-//     //   return{ ...x, InvoiceId:newInv.id }
-//     // })
-//     // await Promise.all([
-//     //   charges.forEach((x) => {
-//     //     Charge_Head.upsert(x);
-//     //   })
-//     // ]);
-//     res.json({status: 'success'});
-//   }
-//   catch (error) {
-//     res.json({status: 'error', result: error});
-//   }
-// });
 
 routes.post("/makeInvoiceNew", async(req, res) => {
   try {
     let result = req.body.chargeList, charges = [], createdInvoice = { };
-    const lastJB = await Invoice.findOne({where:{type:'Job Bill'},     order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
-    const lastJI = await Invoice.findOne({where:{type:'Job Invoice'},  order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
-    const lastAI = await Invoice.findOne({where:{type:'Agent Invoice'},order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
-    const lastAB = await Invoice.findOne({where:{type:'Agent Bill'},   order:[['invoice_Id', 'DESC']], attributes:["invoice_Id"]});
+    const lastJB = await Invoice.findOne({where:{type:'Job Bill'},     order:[['invoice_Id', 'DESC']], attributes:["id","invoice_Id"], include:[{model:Charge_Head, attributes:['id']}]});
+    const lastJI = await Invoice.findOne({where:{type:'Job Invoice'},  order:[['invoice_Id', 'DESC']], attributes:["id","invoice_Id"], include:[{model:Charge_Head, attributes:['id']}]});
+    const lastAI = await Invoice.findOne({where:{type:'Agent Invoice'},order:[['invoice_Id', 'DESC']], attributes:["id","invoice_Id"], include:[{model:Charge_Head, attributes:['id']}]});
+    const lastAB = await Invoice.findOne({where:{type:'Agent Bill'},   order:[['invoice_Id', 'DESC']], attributes:["id","invoice_Id"], include:[{model:Charge_Head, attributes:['id']}]});
 
     await result.forEach(async(x)=>{
       if(x.invoiceType=="Job Bill"){
@@ -647,7 +630,8 @@ routes.post("/makeInvoiceNew", async(req, res) => {
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
-    })
+    });
+    
     const newInv = await Invoice.create(createdInvoice);
     charges = await charges.map((x)=>{
       return{ ...x, InvoiceId:newInv.id }
@@ -657,7 +641,7 @@ routes.post("/makeInvoiceNew", async(req, res) => {
         Charge_Head.upsert(x);
       })
     ]);
-    res.json({status: 'success', result: charges});
+    res.json({status: 'success', result:charges});
   }
   catch (error) {
     res.json({status: 'error', result: error});
