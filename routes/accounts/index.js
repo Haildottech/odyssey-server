@@ -724,10 +724,10 @@ routes.post("/deleteAll", async(req, res) => {
 
 routes.post("/deleteInvoices", async(req, res) => {
   try {
-    await Invoice.destroy({
-      where:{type:'Old Agent Bill'}
+    const result = await Invoice.destroy({
+      where:{companyId:'3'}
     })
-    res.json({status:'success'});
+    res.json({status:'success', result:result});
   }
   catch (error) {
     res.json({status:'error', result:error});

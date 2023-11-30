@@ -521,26 +521,6 @@ routes.post("/saveChargeHeades", async(req, res) => {
 
 routes.post("/saveHeadesNew", async(req, res) => {
   try {
-    // let deletingInvoices = [];
-    // console.log(req.body.deleteList);
-    // const deletes = await Charge_Head.findAll({
-    //   attributes:['id'],
-    //   where:{id:req.body.deleteList},
-    //   include:[{
-    //     model:Invoice,
-    //     include:[{
-    //       model:Charge_Head,
-    //       attributes:['id']
-    //     }]
-    //   }]
-    // })
-    // deletes.forEach((x)=>{
-    //   console.log(x.Invoice.invoice_No)
-    //   x.Invoice.Charge_Heads.forEach((y)=>{
-    //     console.log(y.id)
-    //   })
-    // })
-
     await Charge_Head.destroy({where:{id:req.body.deleteList}})
     await SE_Job.update({exRate:req.body.exRate}, {where:{id:req.body.id}})
     const start = await Date.now();
@@ -721,7 +701,7 @@ routes.get("/invoiceBalancing", async (req, res) => {
       invoiceObj.payType=req.headers.paytype
     }
 
-    // req.headers.company?invoiceObj.companyId=req.headers.company:null;
+    req.headers.company?invoiceObj.companyId=req.headers.company:null;
     // req.headers.currency?invoiceObj.currency=req.headers.currency:null;
     // req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
     
@@ -839,7 +819,7 @@ routes.post("/uploadbulkInvoicesTest", async (req, res) => {
       where:{name:req.body.party_Name},
       attributes:['id']
     })
-    await res.json({ status: "success", result: resultOne?resultOne.id:resultTwo.id });
+    await res.json({ status:"success", result:resultOne?resultOne.id:resultTwo.id });
   } catch (error) {
     console.log(error);
     console.log(req.body.party_Name);

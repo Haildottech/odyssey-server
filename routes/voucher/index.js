@@ -323,6 +323,25 @@ routes.post("/testDeleteVouchers", async (req, res) => {
   }
 });
 
+// routes.get("/findAcsCHF", async (req, res) => {
+//   try {
+
+//     const result = await Vouchers.update(
+//     {
+//       currency:"PKR"
+//     },
+//     {
+//       where:{
+//         currency:"CHF",
+//         CompanyId:3
+//       }
+//     })
+//     await res.json({ status: "success", result:result});
+//   } catch (error) {
+//     res.json({ status: "error", result: error });
+//   }
+// });
+
 routes.post("/getChildAccountIds", async (req, res) => {
   let accountsList = req.body.list;
   let newList = [];
@@ -332,7 +351,7 @@ routes.post("/getChildAccountIds", async (req, res) => {
       attributes:['id', 'title'],
       include:[{
         model:Parent_Account,
-        where:{CompanyId:1},
+        where:{CompanyId:3},
         attributes:['CompanyId', 'title']
       }]
     });
@@ -362,7 +381,7 @@ routes.post("/getChildAccountIds", async (req, res) => {
             },
             { 
               title:x.title,
-              ChildAccountId:y.id,
+              ChildAccountId:y?.id,
               amount:x.amount,
               type:x.type=="debit"?"credit":"debit",
               defaultAmount:x.amount,
@@ -376,7 +395,7 @@ routes.post("/getChildAccountIds", async (req, res) => {
       attributes:['id', 'title'],
       include:[{
         model:Parent_Account,
-        where:{CompanyId:1},
+        where:{CompanyId:3},
         attributes:['CompanyId', 'title']
       }]
     });
