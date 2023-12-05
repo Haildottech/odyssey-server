@@ -205,6 +205,76 @@ routes.get("/getAccountsForTransaction", async(req, res) => {
     }
 });
 
+routes.get("/getAccountsForTransactionVouchers", async(req, res) => {
+  let obj = { };
+  let ChildObj = { };
+  console.log(req.headers.companyid)
+  if(req.headers.type=="Bank") {
+      ChildObj = {subCategory:'Bank'}
+    } else if(req.headers.type=="Cash"){
+    obj = {
+    }
+    ChildObj = {subCategory:'Cash'}
+  } else if(req.headers.type=='Adjust') {
+      ChildObj = {subCategory:'General'}
+      //   obj = {
+      //     [Op.and]: [
+      //       { title: { [Op.ne]: "Cash" } },
+      //       { title: { [Op.ne]: "Accounts Recievable" } },
+      //       { title: { [Op.ne]: "Accounts Payble" } },
+      //       { title: { [Op.ne]: "Bank" } }
+      //     ]
+      //   }
+  } else if(req.headers.type=='officevouchers') { 
+    obj = {
+      [Op.and]: [
+        { title: { [Op.ne]: "Cash" } },
+        { title: { [Op.ne]: "Accounts Recievable" } },
+        { title: { [Op.ne]: "Accounts Payble" } },
+        { title: { [Op.ne]: "Bank" } },
+        { title: { [Op.ne]: "Income" } }, 
+        { title: { [Op.ne]: "Selling Expense" } },
+        { title: { [Op.ne]: "Taxes" } },
+        { title: { [Op.ne]: "Bad Debts" } },
+        { title: { [Op.ne]: "Charges" } },
+        { title: { [Op.ne]: "Gain & Loss" } },
+      ]
+    }
+  } else if(req.headers.type=='Charges') {
+      ChildObj = {subCategory:'General'}
+  } else if(req.headers.type=='Taxes') {
+      ChildObj = {subCategory:'General'}
+  } else if(req.headers.type=='Income' || 'Selling Expense') {
+    obj = {
+      title:req.headers.type,
+      CompanyId:req.headers.companyid,
+    }
+  }else {
+    obj = { 
+      title:req.headers.type,
+      CompanyId:req.headers.companyid
+    }
+  }
+  console.log(req.headers)
+  try {
+    const result = await Child_Account.findAll({
+      where:ChildObj,
+      include:[{
+        model:Parent_Account,
+        attributes:['title', 'CompanyId'],
+        where:{...obj, CompanyId:req.headers.companyid},
+        include:[{
+          model:Accounts
+        }]
+      }]
+    });
+    res.json({status:'success', result:result});
+  }
+  catch (error) {
+    res.json({status:'error', result:error});
+  }
+});
+
 routes.get("/getAllChilds", async(req, res) => {
   try {
     const result = await Child_Account.findAll({

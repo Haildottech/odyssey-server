@@ -5,6 +5,8 @@ const morgan = require('morgan');
 const cors = require('cors');
 const db = require("./models");
 
+// All Routes throughout the project
+
 const miscProfitLossRoutes = require('./routes/misc/profitLoss');
 const homeOperationsRoutes = require('./routes/home/operations');
 const homeDashboardRoutes = require('./routes/home/dashboard');
@@ -68,7 +70,6 @@ app.use("/seaJob", seaJobRoutes);
 app.use("/tasks", assignedTasks);
 app.use("/manifest", manifest );
 
-// abdullah added a new feature
 const PORT = process.env.PORT || 8081; 
 
 app.listen(PORT, () => { console.log(`App listenings on port ${PORT}`) });

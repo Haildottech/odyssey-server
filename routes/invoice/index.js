@@ -473,6 +473,7 @@ routes.post("/createInvoiceTransaction", async(req, res) => {
   }
 });
 
+// round off an invoice
 routes.post("/roundOffInv", async(req, res) => {
   try {
     await Invoice.update({ roundOff:req.body.roundOff }, { where:{id:req.body.id} });
@@ -483,6 +484,7 @@ routes.post("/roundOffInv", async(req, res) => {
   }
 });
 
+// Approve or disapprove an invoice
 routes.post("/invApproveDisapp", async(req, res) => {
   try {
     await Invoice.update({ total:req.body.total, approved:req.body.approved, ex_rate:req.body.exRate, status:"1" }, { where:{id:req.body.id} });
@@ -493,6 +495,7 @@ routes.post("/invApproveDisapp", async(req, res) => {
   }
 });
 
+// Adds a note to invoice and also the currency
 routes.post("/addInvoiceNote", async(req, res) => {
   try {
     await Invoice.update({ note:req.body.note, currency:req.body.currency}, { where:{id:req.body.id} });
@@ -519,6 +522,7 @@ routes.post("/saveChargeHeades", async(req, res) => {
   }
 });
 
+// This api saves the heads added on the related Job
 routes.post("/saveHeadesNew", async(req, res) => {
   try {
     await Charge_Head.destroy({where:{id:req.body.deleteList}})
@@ -538,6 +542,7 @@ routes.post("/saveHeadesNew", async(req, res) => {
   }
 });
 
+// This api shows the heads added on the related Job
 routes.get("/getHeadesNew", async(req, res) => {
   try {
     const result = await Charge_Head.findAll({
@@ -551,16 +556,17 @@ routes.get("/getHeadesNew", async(req, res) => {
   }
 });
 
+// This function is used in the API below helps to set invoice number according to the last generated invoice with fiscal year
 const createInvoices = (lastJB, init, type, companyId, operation, x) => {
   let company = '';
   let inVoiceDeleteList = []
-  if(lastJB.Charge_Heads.length==0){
+  if(lastJB?.Charge_Heads?.length==0){
     inVoiceDeleteList.push(lastJB.id)
   }
-  let addition = lastJB.Charge_Heads.length==0?0:1;
+  let addition = lastJB?.Charge_Heads?.length==0?0:1;
   company = companyId=='1'?"SNS":companyId=='2'?"CLS":"ACS";
   let result = {
-    invoice_No:(lastJB==null || lastJB.invoice_Id==null)?`${company}-${init}-${1}/${moment().format("YY")}`:`${company}-${init}-${parseInt(lastJB.invoice_Id)+parseInt(addition)}/${moment().format("YY")}`,
+    invoice_No:(lastJB==null || lastJB.invoice_Id==null)?`${company}-${init}-${1}/${moment().add(1, 'years').format("YY")}`:`${company}-${init}-${parseInt(lastJB.invoice_Id)+parseInt(addition)}/${moment().add(1, 'years').format("YY")}`,
     invoice_Id: (lastJB==null || lastJB.invoice_Id==null)?1: parseInt(lastJB.invoice_Id)+parseInt(addition),
     type:type,
     companyId:companyId,
@@ -577,6 +583,7 @@ const createInvoices = (lastJB, init, type, companyId, operation, x) => {
   return result;
 };
 
+// generate new invoice with invoice number (This API generates only invoice numbers)
 routes.post("/makeInvoiceNew", async(req, res) => {
   try {
     let result = req.body.chargeList, charges = [], createdInvoice = { };
@@ -628,6 +635,7 @@ routes.post("/makeInvoiceNew", async(req, res) => {
   }
 });
 
+// To display invoices in Invoices page present in accounts tab
 routes.get("/getInvoices", async(req, res) =>{
   try {
     const result = await Invoice.findAll({
@@ -647,6 +655,7 @@ routes.get("/getInvoices", async(req, res) =>{
   }
 });
 
+// For Experimental Purposes
 routes.get('/getTaskInvoices', async(req, res) => {
   try {
     const result = await Invoice.findAll({ where: {status: "2" , approved: "1"}})
@@ -657,6 +666,7 @@ routes.get('/getTaskInvoices', async(req, res) => {
   }
 });
 
+// For Experimental Purposes
 routes.get('/getCPUS', async(req, res) => {
   try {
     //const result = await Invoice.findAll({ where: {status: "2" , approved: "1"}})
@@ -667,6 +677,7 @@ routes.get('/getCPUS', async(req, res) => {
   }
 });
 
+// For Data Backup
 routes.get('/testGetLastInvoice', async(req, res) => {
   try {
     const lastJI = await Invoice.findOne({ 
@@ -682,6 +693,69 @@ routes.get('/testGetLastInvoice', async(req, res) => {
   }
 });
 
+// displays job data according to Invoice balance Page
+routes.get("/jobBalancing", async (req, res) => {
+  try {
+    let invoiceObj = {
+      // below condition sets the date range
+      createdAt: {
+        [Op.gte]: moment(req.headers.from).toDate(),
+        [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
+      },
+      status:{ [Op.ne]: null },
+      // below condition make sures to display only Job-Invoice & Job-Bill
+      [Op.and]: [
+        { type: { [Op.ne]: "Agent Invoice" } },
+        { type: { [Op.ne]: "Old Agent Invoice" } },
+        { type: { [Op.ne]: "Agent Bill" } },
+        { type: { [Op.ne]: "Old Agent Bill" } },
+      ]
+    };
+    // below condition sets if both payble & receivable invoices/bills are being called
+    if(req.headers.paytype!="All"){
+      invoiceObj.payType=req.headers.paytype
+    }
+    // party wise invoice/bill
+    req.headers.party?invoiceObj.party_Id=req.headers.party:null;
+    // Company wise invoice/bill
+    req.headers.company?invoiceObj.companyId=req.headers.company:null;
+    // Currency wise invoice/bill
+    req.headers.currency?invoiceObj.currency=req.headers.currency:null;
+    // Job Type/operation wise invoice/bill
+    req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
+
+    // To include the Job, Bl & Equipments data in the invoices
+    let includeObj = {
+      model:SE_Job,
+      include:[
+        {
+          model:Bl,
+          attributes:['hbl'],
+        },
+        {
+          model:SE_Equipments,
+          attributes:['qty', 'size']
+        }
+      ],
+      order: [[ 'createdAt', 'ASC' ]],
+      attributes:['id', 'fd', 'freightType'],
+    }
+    // overseas agent wise invoice/bill
+    req.headers.overseasagent?includeObj.where = {overseasAgentId:req.headers.overseasagent}:null;
+
+    const result = await Invoice.findAll({
+      where:invoiceObj,
+      attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
+      include:[includeObj]
+    });
+    await res.json({ status: "success", result: result });
+  } catch (error) {
+    console.log(error)
+    res.json({ status: "error", result: error });
+  }
+});
+
+// this below api is just a copy of the above api just it's specifically for Agent-Invoices/Agent-Bills only
 routes.get("/invoiceBalancing", async (req, res) => {
   try {
     let invoiceObj = {
@@ -706,7 +780,6 @@ routes.get("/invoiceBalancing", async (req, res) => {
     // req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
     
     (req.headers.overseasagent!=''&&req.headers.overseasagent!=null)?invoiceObj.party_Id=req.headers.overseasagent:null;
-    console.log(invoiceObj)
     const result = await Invoice.findAll({
       where:invoiceObj,
       attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
@@ -733,61 +806,7 @@ routes.get("/invoiceBalancing", async (req, res) => {
   }
 });
 
-routes.get("/jobBalancing", async (req, res) => {
-  try {
-    let invoiceObj = {
-      createdAt: {
-        [Op.gte]: moment(req.headers.from).toDate(),
-        [Op.lte]: moment(req.headers.to).add(1, 'days').toDate(),
-      },
-      status:{ [Op.ne]: null },
-      [Op.and]: [
-        { type: { [Op.ne]: "Agent Invoice" } },
-        { type: { [Op.ne]: "Old Agent Invoice" } },
-        { type: { [Op.ne]: "Agent Bill" } },
-        { type: { [Op.ne]: "Old Agent Bill" } },
-      ]
-    };
-    if(req.headers.paytype!="All"){
-      invoiceObj.payType=req.headers.paytype
-    }
-    console.log(req.headers.party)
-    req.headers.party?invoiceObj.party_Id=req.headers.party:null;
-    req.headers.company?invoiceObj.companyId=req.headers.company:null;
-    req.headers.currency?invoiceObj.currency=req.headers.currency:null;
-    
-    req.headers.jobtypes?.length>0?invoiceObj.operation=req.headers.jobtypes.split(","):null;
-
-    let includeObj = {
-      model:SE_Job,
-      include:[
-        {
-          model:Bl,
-          attributes:['hbl'],
-        },
-        {
-          model:SE_Equipments,
-          attributes:['qty', 'size']
-        }
-      ],
-      order: [[ 'createdAt', 'ASC' ]],
-      attributes:['id', 'fd', 'freightType'],
-    }
-
-    req.headers.overseasagent?includeObj.where = {overseasAgentId:req.headers.overseasagent}:null;
-
-    const result = await Invoice.findAll({
-      where:invoiceObj,
-      attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
-      include:[includeObj]
-    });
-    await res.json({ status: "success", result: result });
-  } catch (error) {
-    console.log(error)
-    res.json({ status: "error", result: error });
-  }
-});
-
+// For Data Backup
 routes.get("/invoiceTest", async (req, res) => {
   try {
 
@@ -809,6 +828,7 @@ routes.get("/invoiceTest", async (req, res) => {
   }
 });
 
+// For Data Backup
 routes.post("/uploadbulkInvoicesTest", async (req, res) => {
   try {
     const resultOne = await Clients.findOne({
@@ -827,6 +847,7 @@ routes.post("/uploadbulkInvoicesTest", async (req, res) => {
   }
 });
 
+// For Data Backup
 routes.post("/createBulkInvoices", async (req, res) => {
   try {
 
@@ -841,6 +862,7 @@ routes.post("/createBulkInvoices", async (req, res) => {
   }
 });
 
+// For Data Backup
 routes.get("/getClientsWithACPayble", async (req, res) => {
   try {
     const result = await Clients.findAll({
