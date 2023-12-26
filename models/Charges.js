@@ -57,6 +57,10 @@ module.exports = (sequelize, DataTypes) => {
             type:DataTypes.STRING,
             allowNull: false,
         },
+        fixAmount:{
+            type:DataTypes.DOUBLE,  
+            defaultValue:0.0
+        },
     })
     return Charges;
 }

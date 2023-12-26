@@ -9,6 +9,6 @@ module.exports = ( sequelize, DataTypes ) => {
         CompanyId:    { type:DataTypes.BOOLEAN},
         reverseAmount:{ type:DataTypes.DOUBLE,  defaultValue:0.0  },
         paid:         { type:DataTypes.STRING,  defaultValue:"0"},
-    })
+    });
     return Office_Vouchers
 }

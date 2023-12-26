@@ -79,20 +79,20 @@ routes.post("/approveCharges", async(req, res) => {
 });
 
 routes.post("/updateCharges", async(req, res) => {
-    try {
-      req.body.invoice.forEach(async(x)=>{
-        await Invoice.update(x,{where:{id:x.id}})
-        req.body.charges.forEach(async(y)=>{
-          if(x.type==y.invoiceType && y.InvoiceId==x.id){
-            await Charge_Head.update({...y, invoice_id:x.invoice_No, status:"1"},{where:{id:y.id}})
-          }
-        })
+  try {
+    req.body.invoice.forEach(async(x)=>{
+      await Invoice.update(x,{where:{id:x.id}})
+      req.body.charges.forEach(async(y)=>{
+        if(x.type==y.invoiceType && y.InvoiceId==x.id){
+          await Charge_Head.update({...y, invoice_id:x.invoice_No, status:"1"},{where:{id:y.id}})
+        }
       })
-      await res.json({status: 'success', result: 'result'});
-    }
-    catch (error) {
-      res.json({status: 'error', result: error});
-    }
+    });
+    await res.json({status: 'success', result: 'result'});
+  }
+  catch (error) {
+    res.json({status: 'error', result: error});
+  }
 }); 
 
 routes.post("/saveHeades", async(req, res) => {
@@ -525,16 +525,12 @@ routes.post("/saveChargeHeades", async(req, res) => {
 // This api saves the heads added on the related Job
 routes.post("/saveHeadesNew", async(req, res) => {
   try {
-    await Charge_Head.destroy({where:{id:req.body.deleteList}})
-    await SE_Job.update({exRate:req.body.exRate}, {where:{id:req.body.id}})
-    const start = await Date.now();
-    await Promise.all([
-      req.body.charges.forEach((x) => {
-        Charge_Head.upsert(x);
-      })
-    ]);
-    const end = await Date.now();
-    console.log(`Execution time: ${end - start} ms`);
+    await Charge_Head.destroy({where:{id:req.body.deleteList}});
+    await SE_Job.update({exRate:req.body.exRate}, {where:{id:req.body.id}});
+    let data;
+    await req.body.charges.forEach(async(x) => {
+      data = await Charge_Head.upsert(x);
+    });
     res.json({status:'success'});
   }
   catch (error) {
@@ -595,40 +591,38 @@ routes.post("/makeInvoiceNew", async(req, res) => {
     await result.forEach(async(x)=>{
       if(x.invoiceType=="Job Bill"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastJB, "JB", "Job Bill", req.body.companyId, req.body.type, x)
+          createdInvoice = await createInvoices(lastJB, "JB", "Job Bill", req.body.companyId, req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Job Invoice"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastJI, "JI", "Job Invoice", req.body.companyId,req.body.type, x)
+          createdInvoice = await createInvoices(lastJI, "JI", "Job Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Invoice"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastAI, "AI", "Agent Invoice", req.body.companyId,req.body.type, x)
+          createdInvoice = await createInvoices(lastAI, "AI", "Agent Invoice", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
       if(x.invoiceType=="Agent Bill"){
         if(Object.keys(createdInvoice).length==0){
-          createdInvoice = createInvoices(lastAB, "AB", "Agent Bill", req.body.companyId,req.body.type, x)
+          createdInvoice = await createInvoices(lastAB, "AB", "Agent Bill", req.body.companyId,req.body.type, x)
         }
         charges.push({...x, status:"1", invoice_id:createdInvoice.invoice_No })
       }
     });
     
     const newInv = await Invoice.create(createdInvoice);
-    charges = await charges.map((x)=>{
-      return{ ...x, InvoiceId:newInv.id }
+    // const newCharges = await charges.map((x)=>{
+    //   return{ ...x, InvoiceId:newInv.id }
+    // })
+    await charges.forEach((x) => {
+      Charge_Head.upsert({ ...x, InvoiceId:newInv.id });
     })
-    await Promise.all([
-      charges.forEach((x) => {
-        Charge_Head.upsert(x);
-      })
-    ]);
-    res.json({status: 'success', result:charges});
+    await res.json({status: 'success'});
   }
   catch (error) {
     res.json({status: 'error', result: error});
@@ -648,7 +642,6 @@ routes.get("/getInvoices", async(req, res) =>{
       }]
     })
     res.json({status: 'success', result: result});
-      
   }
   catch (error) {
     res.json({status: 'error', result: error});
@@ -850,7 +843,6 @@ routes.post("/uploadbulkInvoicesTest", async (req, res) => {
 // For Data Backup
 routes.post("/createBulkInvoices", async (req, res) => {
   try {
-
     await Invoice.bulkCreate(req.body)
     .catch((x)=>{
       console.log(x)

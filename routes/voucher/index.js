@@ -229,8 +229,21 @@ routes.get("/getAccountActivity", async (req, res) => {
 
 routes.get("/getAllVouchers", async (req, res) => {
   try {
-    const result = await Vouchers.findAll({
+    console.log(req.headers.offset)
+    const count = await Vouchers.count({
       where: {
+        CompanyId:req.headers.id,
+        [Op.and]:[
+          {type: {[Op.ne]:"Job Payment"} },
+          {type: {[Op.ne]:"Job Reciept"} },
+        ]
+      }
+    })
+    const result = await Vouchers.findAll({
+      offset:req.headers.offset,
+      limit: 30,
+      where: {
+        CompanyId:req.headers.id,
         [Op.and]:[
           {type: {[Op.ne]:"Job Payment"} },
           {type: {[Op.ne]:"Job Reciept"} },
@@ -243,7 +256,7 @@ routes.get("/getAllVouchers", async (req, res) => {
       }],
       order: [["createdAt", "DESC"]],
     });
-    await res.json({ status: "success", result: result });
+    await res.json({ status: "success", result: result, count});
   } catch (error) {
     res.json({ status: "error", result: error });
   }
@@ -307,6 +320,16 @@ routes.get("/getVouchersByEmployeeId", async (req, res) => {
       where: { EmployeeId: req.headers.id },
     });
     await res.json({ status: "success", result: result });
+  } catch (error) {
+    res.json({ status: "error", result: error });
+  }
+});
+
+routes.post("/deleteBaseVoucher", async (req, res) => {
+  try {
+    await Voucher_Heads.destroy({where:{VoucherId:req.body.id}})
+    await Vouchers.destroy({where:{id:req.body.id}})
+    await res.json({ status: "success"});
   } catch (error) {
     res.json({ status: "error", result: error });
   }

@@ -26,6 +26,7 @@ routes.post("/create", async(req, res) => {
 });
 
 routes.post("/edit", async(req, res) => {
+  console.log(req.body)
   let tempData = {...req.body.data};
   try {
     const exists = await Charges.findOne({
