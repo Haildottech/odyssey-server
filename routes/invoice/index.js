@@ -730,7 +730,6 @@ routes.get("/jobBalancing", async (req, res) => {
           attributes:['qty', 'size']
         }
       ],
-      order: [[ 'createdAt', 'ASC' ]],
       attributes:['id', 'fd', 'freightType'],
     }
     // overseas agent wise invoice/bill
@@ -739,7 +738,8 @@ routes.get("/jobBalancing", async (req, res) => {
     const result = await Invoice.findAll({
       where:invoiceObj,
       attributes:['invoice_No', 'payType', 'currency', 'ex_rate', 'roundOff', 'total', 'paid', 'recieved', 'createdAt', 'party_Name'],
-      include:[includeObj]
+      include:[includeObj],
+      order: [[ 'createdAt', 'ASC' ]],
     });
     await res.json({ status: "success", result: result });
   } catch (error) {
