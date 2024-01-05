@@ -208,7 +208,7 @@ routes.get("/getAccountsForTransaction", async(req, res) => {
 routes.get("/getAccountsForTransactionVouchers", async(req, res) => {
   let obj = { };
   let ChildObj = { };
-  console.log(req.headers.companyid)
+  console.log(req.headers.type, '====')
   if(req.headers.type=="Bank") {
       ChildObj = {subCategory:'Bank'}
     } else if(req.headers.type=="Cash"){
@@ -225,6 +225,8 @@ routes.get("/getAccountsForTransactionVouchers", async(req, res) => {
       //       { title: { [Op.ne]: "Bank" } }
       //     ]
       //   }
+  } else if(req.headers.type=='All') {
+
   } else if(req.headers.type=='officevouchers') { 
     obj = {
       [Op.and]: [
@@ -255,7 +257,7 @@ routes.get("/getAccountsForTransactionVouchers", async(req, res) => {
       CompanyId:req.headers.companyid
     }
   }
-  console.log(req.headers)
+  // console.log(req.headers)
   try {
     const result = await Child_Account.findAll({
       where:ChildObj,
