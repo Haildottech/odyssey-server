@@ -231,19 +231,8 @@ routes.get("/getAccountActivity", async (req, res) => {
 
 routes.get("/getAllVouchers", async (req, res) => {
   try {
-    console.log(req.headers.offset)
-    const count = await Vouchers.count({
-      where: {
-        CompanyId: req.headers.id,
-        [Op.and]: [
-          { type: { [Op.ne]: "Job Payment" } },
-          { type: { [Op.ne]: "Job Reciept" } },
-        ]
-      }
-    })
+
     const result = await Vouchers.findAll({
-      offset: req.headers.offset,
-      limit: 30,
       where: {
         CompanyId: req.headers.id,
         [Op.and]: [
@@ -258,7 +247,7 @@ routes.get("/getAllVouchers", async (req, res) => {
       }],
       order: [["createdAt", "DESC"]],
     });
-    await res.json({ status: "success", result: result, count });
+    await res.json({ status: "success", result: result, count:1 });
   } catch (error) {
     res.json({ status: "error", result: error });
   }
