@@ -404,7 +404,7 @@ routes.post("/createBl", async(req, res) => {
       cwtClient:data.chargableWt
     }
     if(data.operation=="SI" || data.operation=="AI" || data.operation=="SE"){
-      console.log("Here")
+      // console.log("Here")
       await SE_Job.update({
         ...obj
       }, {where:{id:data.SEJobId}});
@@ -412,7 +412,7 @@ routes.post("/createBl", async(req, res) => {
     const check = await Bl.findOne({order: [['no', 'DESC']], attributes:["no"] })
     const result = await Bl.create({...data, 
       no:check==null?1:parseInt(check.no)+1, 
-      hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
+      // hbl:data.operation=="SE"?`SNSL${ check==null?1:parseInt(check.no)+1 }`:data.hbl
     }).catch((x)=>console.log(x))
     // Creating Items for AE
     if(data.Item_Details.length>0){
