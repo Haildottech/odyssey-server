@@ -121,7 +121,6 @@ routes.post("/voucherCreation", async (req, res) => {
         }/${moment().format("YY")}`,
 
     }).catch((x) => console.log(x))
-    console.log(result);
 
     let dataz = await setVoucherHeads(result.id, req.body.Voucher_Heads);
     await Voucher_Heads.bulkCreate(dataz);
