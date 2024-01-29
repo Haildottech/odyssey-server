@@ -196,7 +196,7 @@ routes.get("/getInvoiceByNo", async(req, res) => {
           {
             model:SE_Job,
             attributes:[
-              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo', 'cwtClient', 'cwtLine', 'departureDate'
+              'jobNo', 'jobDate', 'shipDate', 'pol', 'pod', 'fd', 'vol', 'weight', 'pcs', 'flightNo', 'cwtClient', 'cwtLine', 'eta', 'etd'
             ],
             //attributes:['id'],
             include:[
