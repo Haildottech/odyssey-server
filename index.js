@@ -29,6 +29,7 @@ const vendorRoutes = require('./routes/vendors');
 const vesselRoutes = require('./routes/vessel');
 const manifest = require('./routes/manifest');
 const authRoutes = require('./routes/auth/');
+const ports = require("./routes/ports");
 
 const { SE_Equipments, SE_Job, Container_Info, Bl, Stamps, Job_notes, Delivery_Order, Item_Details, Manifest, Manifest_Jobs } = require('./functions/Associations/jobAssociations/seaExport');
 const { Vendors, Vendor_Associations } = require('./functions/Associations/vendorAssociations');
@@ -69,6 +70,7 @@ app.use("/vendor", vendorRoutes);
 app.use("/seaJob", seaJobRoutes);
 app.use("/tasks", assignedTasks);
 app.use("/manifest", manifest );
+app.use("/ports", ports );
 
 const PORT = process.env.PORT || 8081; 
 
