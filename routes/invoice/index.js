@@ -335,6 +335,34 @@ routes.get("/getAllInoivcesByPartyId", async(req, res) => {
   }
 });
 
+routes.post("/invoiceTestingOnly", async(req, res) => {
+  try {
+    //SE_Job
+    const result = await Invoice.findAll({
+      limit:1,
+      where:{
+        party_Id:null,
+        payType:'Recievable'
+      }
+    });
+    result.forEach(async(x)=>{
+      console.log(x.party_Name);
+      let clientId = await Clients.findOne({
+        where:{name:x.party_Name},
+        attributes:['id']
+      });
+      if(clientId.id){
+        console.log(clientId.id);
+        await Invoice.update({party_Id:clientId.id},{where:{id:x.id}})
+      }
+    })
+    res.json({ status:'successBaby', result });
+  } catch (error) {
+
+    res.json({status:'error', result:error});
+  }
+});
+
 routes.get("/getAllOldInoivcesByPartyId", async(req, res) => {
   try {
     const result = await Invoice.findAll({
