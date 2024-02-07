@@ -5,7 +5,6 @@ const { Employees } = require("../../functions/Associations/employeeAssociations
 const { History } = require("../../functions/Associations/historyAssociations")
 
 routes.get("/getHistory", async(req, res) => {
-    console.log(req.headers)
     try {
         const result = await History.findAll({ 
             where:{
